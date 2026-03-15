@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Library — CloudNovel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    /* ── Page base ───────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #0f172a;
+      color: #ffffff;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Ambient top glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -200px; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 500px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.11) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ─────────────────────────────────────────────────── */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 2rem;
+      gap: 1.5rem;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(22px) saturate(1.4);
+      -webkit-backdrop-filter: blur(22px) saturate(1.4);
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+      transition: background 0.3s ease, box-shadow 0.3s ease;
+    }
+    .navbar.scrolled {
+      background: rgba(15,23,42,0.97);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.45);
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      text-decoration: none;
+      color: #fff;
+      flex-shrink: 0;
+    }
+    .nav-logo__icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: 0 0 18px rgba(99,102,241,0.4);
+    }
+    .nav-logo span { color: #818cf8; }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+      list-style: none;
+    }
+    .nav-links a {
+      padding: 0.45rem 0.9rem;
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #94a3b8;
+      text-decoration: none;
+      transition: color 0.2s, background 0.2s;
+    }
+    .nav-links a:hover,
+    .nav-links a.active {
+      color: #fff;
+      background: rgba(99,102,241,0.12);
+    }
+    .nav-links a.active { color: #818cf8; }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-shrink: 0;
+    }
+    .nav-avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #c084fc);
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: 2px solid rgba(99,102,241,0.4);
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .nav-avatar:hover {
+      border-color: #6366f1;
+      box-shadow: 0 0 14px rgba(99,102,241,0.4);
+    }
+
+    .nav-btn {
+      padding: 0.5rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(99,102,241,0.35);
+      background: rgba(99,102,241,0.1);
+      color: #818cf8;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+      text-decoration: none;
+    }
+    .nav-btn:hover {
+      background: #6366f1;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(99,102,241,0.4);
+      transform: translateY(-1px);
+    }
+
+    /* Mobile hamburger */
+    .nav-hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 4px;
+    }
+    .nav-hamburger span {
+      display: block;
+      width: 22px; height: 2px;
+      background: #94a3b8;
+      border-radius: 2px;
+      transition: transform 0.3s ease, opacity 0.2s;
+    }
+
+    /* ── PAGE WRAPPER ────────────────────────────────────────── */
+    .page {
+      padding-top: 68px;
+      min-height: 100vh;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── LIBRARY HEADER ──────────────────────────────────────── */
+    .library-header {
+      padding: 3.5rem 2rem 0;
+      max-width: 1280px;
+      margin: 0 auto;
+      animation: fade-up 0.6s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    .library-header__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #818cf8;
+      margin-bottom: 0.75rem;
+    }
+    .library-header__eyebrow::before {
+      content: '';
+      width: 18px; height: 2px;
+      background: #6366f1;
+      border-radius: 2px;
+    }
+
+    .library-header__title {
+      font-size: clamp(1.9rem, 3.5vw, 2.8rem);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin-bottom: 0.5rem;
+    }
+    .library-header__title em {
+      font-style: normal;
+      background: linear-gradient(135deg, #818cf8, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .library-header__sub {
+      font-size: 0.9rem;
+      color: #64748b;
+      font-weight: 300;
+    }
+
+    /* ── CONTROLS BAR ────────────────────────────────────────── */
+    .controls {
+      max-width: 1280px;
+      margin: 2rem auto 0;
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+      animation: fade-up 0.6s 0.1s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    /* Search */
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 220px;
+      max-width: 400px;
+    }
+    .search-wrap__icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #475569;
+      font-size: 0.95rem;
+      pointer-events: none;
+      transition: color 0.2s;
+    }
+    .search-input {
+      width: 100%;
+      padding: 0.72rem 1rem 0.72rem 2.75rem;
+      background: rgba(30,41,59,0.7);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 999px;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .search-input::placeholder { color: #475569; }
+    .search-input:focus {
+      border-color: #6366f1;
+      background: rgba(99,102,241,0.07);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.14);
+    }
+    .search-wrap:focus-within .search-wrap__icon { color: #818cf8; }
+
+    /* Sort dropdown */
+    .sort-select {
+      padding: 0.72rem 2.25rem 0.72rem 1rem;
+      background: rgba(30,41,59,0.7);
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 999px;
+      color: #94a3b8;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.85rem center;
+      transition: border-color 0.2s;
+    }
+    .sort-select:focus { border-color: #6366f1; }
+    .sort-select option { background: #1e293b; }
+
+    /* Result count */
+    .result-count {
+      font-size: 0.8rem;
+      color: #475569;
+      white-space: nowrap;
+      margin-left: auto;
+    }
+    .result-count strong { color: #818cf8; }
+
+    /* ── CATEGORY FILTERS ────────────────────────────────────── */
+    .filters {
+      max-width: 1280px;
+      margin: 1.25rem auto 0;
+      padding: 0 2rem;
+      display: flex;
+      gap: 0.6rem;
+      flex-wrap: wrap;
+      animation: fade-up 0.6s 0.15s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    .filter-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.45rem 1.1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.07);
+      background: rgba(30,41,59,0.6);
+      color: #64748b;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.22s ease;
+    }
+    .filter-btn:hover {
+      color: #cbd5e1;
+      border-color: rgba(99,102,241,0.3);
+      background: rgba(99,102,241,0.07);
+    }
+    .filter-btn.active {
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      border-color: transparent;
+      color: #fff;
+      box-shadow: 0 0 16px rgba(99,102,241,0.35);
+    }
+    .filter-btn .filter-count {
+      background: rgba(255,255,255,0.18);
+      border-radius: 999px;
+      padding: 0.05rem 0.45rem;
+      font-size: 0.7rem;
+      font-weight: 700;
+    }
+    .filter-btn.active .filter-count { background: rgba(255,255,255,0.25); }
+
+    /* ── BOOK GRID ───────────────────────────────────────────── */
+    .grid-section {
+      max-width: 1280px;
+      margin: 2rem auto 0;
+      padding: 0 2rem 4rem;
+    }
+
+    .book-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 1.75rem;
+    }
+
+    /* ── BOOK CARD ───────────────────────────────────────────── */
+    .book-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      animation: card-in 0.5s cubic-bezier(0.4,0,0.2,1) both;
+    }
+
+    /* Staggered entrance */
+    .book-card:nth-child(1)  { animation-delay: 0.05s; }
+    .book-card:nth-child(2)  { animation-delay: 0.10s; }
+    .book-card:nth-child(3)  { animation-delay: 0.15s; }
+    .book-card:nth-child(4)  { animation-delay: 0.20s; }
+    .book-card:nth-child(5)  { animation-delay: 0.25s; }
+    .book-card:nth-child(6)  { animation-delay: 0.30s; }
+    .book-card:nth-child(7)  { animation-delay: 0.35s; }
+    .book-card:nth-child(8)  { animation-delay: 0.40s; }
+
+    @keyframes card-in {
+      from { opacity: 0; transform: translateY(22px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Cover wrapper */
+    .book-card__cover {
+      position: relative;
+      aspect-ratio: 2 / 3;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #1e293b;
+      border: 1px solid rgba(255,255,255,0.05);
+      will-change: transform;
+      transition:
+        transform 0.35s cubic-bezier(0.34,1.56,0.64,1),
+        box-shadow 0.35s ease;
+    }
+
+    .book-card:hover .book-card__cover {
+      transform: scale(1.05) translateY(-8px);
+      box-shadow:
+        0 28px 56px rgba(0,0,0,0.6),
+        0 0 0 1px rgba(99,102,241,0.25),
+        0 0 30px rgba(99,102,241,0.15);
+    }
+
+    /* Cover image — uses gradient placeholder if no real image */
+    .book-card__img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      transition: filter 0.35s ease;
+    }
+    .book-card:hover .book-card__img { filter: brightness(1.07) saturate(1.1); }
+
+    /* Genre badge */
+    .book-card__badge {
+      position: absolute;
+      top: 9px; left: 9px;
+      padding: 0.22rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.15);
+    }
+    .badge--fantasy  { background: rgba(139,92,246,0.75); color: #ede9fe; }
+    .badge--romance  { background: rgba(236,72,153,0.75); color: #fce7f3; }
+    .badge--mystery  { background: rgba(251,146,60,0.75); color: #fff7ed; }
+    .badge--sci-fi   { background: rgba(6,182,212,0.75);  color: #ecfeff; }
+    .badge--thriller { background: rgba(239,68,68,0.75);  color: #fee2e2; }
+
+    /* Hover overlay */
+    .book-card__overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        to top,
+        rgba(15,23,42,0.95) 0%,
+        rgba(15,23,42,0.4)  45%,
+        transparent 70%
+      );
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      padding: 1rem;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    .book-card:hover .book-card__overlay { opacity: 1; }
+
+    .overlay-read-btn {
+      width: 100%;
+      padding: 0.52rem;
+      background: linear-gradient(135deg, #6366f1, #818cf8);
+      border: none;
+      border-radius: 9px;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      box-shadow: 0 0 14px rgba(99,102,241,0.4);
+      transition: box-shadow 0.2s;
+    }
+    .overlay-read-btn:hover { box-shadow: 0 0 22px rgba(99,102,241,0.6); }
+
+    .overlay-meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+    }
+    .overlay-pages { font-size: 0.72rem; color: #94a3b8; }
+    .overlay-rating {
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: #fbbf24;
+    }
+
+    /* Card text info */
+    .book-card__info { padding: 0 0.1rem; }
+
+    .book-card__title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: #f1f5f9;
+      margin-bottom: 0.22rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .book-card__author {
+      font-size: 0.76rem;
+      color: #64748b;
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .book-card__footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 0.3rem;
+    }
+    .book-card__rating {
+      display: flex;
+      align-items: center;
+      gap: 0.22rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #fbbf24;
+    }
+    .book-card__reads {
+      font-size: 0.7rem;
+      color: #475569;
+    }
+
+    /* ── EMPTY STATE ─────────────────────────────────────────── */
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 5rem 1rem;
+      text-align: center;
+      grid-column: 1 / -1;
+      color: #475569;
+    }
+    .empty-state.visible { display: flex; }
+    .empty-state__icon { font-size: 3.5rem; opacity: 0.4; }
+    .empty-state__title { font-size: 1.1rem; font-weight: 600; color: #64748b; }
+    .empty-state__sub   { font-size: 0.85rem; }
+
+    /* ── KEYFRAMES ───────────────────────────────────────────── */
+    @keyframes fade-up {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── FOOTER ──────────────────────────────────────────────── */
+    .footer-bar {
+      border-top: 1px solid rgba(255,255,255,0.05);
+      padding: 1.5rem 2rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1280px;
+      margin: 0 auto;
+      font-size: 0.78rem;
+      color: #334155;
+    }
+    .footer-bar a { color: #6366f1; text-decoration: none; }
+    .footer-bar a:hover { color: #818cf8; }
+
+    /* ── RESPONSIVE ──────────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .nav-links, .nav-btn { display: none; }
+      .nav-hamburger { display: flex; }
+
+      .library-header { padding: 2.5rem 1.25rem 0; }
+      .controls, .filters { padding: 0 1.25rem; }
+      .grid-section { padding: 0 1.25rem 3rem; }
+
+      .controls { gap: 0.75rem; }
+      .search-wrap { max-width: 100%; min-width: 0; flex: 1 1 100%; order: -1; }
+      .result-count { margin-left: 0; }
+
+      .book-grid { grid-template-columns: repeat(2, 1fr); gap: 1.1rem; }
+    }
+
+    @media (max-width: 420px) {
+      .book-grid { grid-template-columns: repeat(2, 1fr); gap: 0.9rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── NAVBAR ─────────────────────────────────────────────── -->
+  <nav class="navbar" id="navbar">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo__icon">📖</div>
+      Cloud<span>Novel</span>
+    </a>
+
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="library.html" class="active">Library</a></li>
+      <li><a href="#">Trending</a></li>
+      <li><a href="#">Authors</a></li>
+    </ul>
+
+    <div class="nav-actions">
+      <a href="login.html" class="nav-btn">Login</a>
+      <div class="nav-avatar" title="Profile">JA</div>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- ── PAGE ───────────────────────────────────────────────── -->
+  <div class="page">
+
+    <!-- Header -->
+    <header class="library-header">
+      <div class="library-header__eyebrow">Your Collection</div>
+      <h1 class="library-header__title">Explore the <em>Library</em></h1>
+      <p class="library-header__sub">8 novels curated for every kind of reader.</p>
+    </header>
+
+    <!-- Controls -->
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-wrap__icon">🔍</span>
+        <input
+          type="search"
+          class="search-input"
+          id="search-input"
+          placeholder="Search novels..."
+          autocomplete="off"
+          aria-label="Search novels"
+        />
+      </div>
+
+      <select class="sort-select" id="sort-select" aria-label="Sort books">
+        <option value="default">Sort: Featured</option>
+        <option value="rating">Highest Rated</option>
+        <option value="title">Title A–Z</option>
+        <option value="author">Author A–Z</option>
+      </select>
+
+      <a href="upload.html" class="nav-btn">Upload Novel</a>
+
+      <span class="result-count" id="result-count"><strong>8</strong> novels</span>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="filters" id="filters" role="group" aria-label="Filter by genre">
+      <button class="filter-btn active" data-genre="all">
+        All <span class="filter-count" id="count-all">8</span>
+      </button>
+      <button class="filter-btn" data-genre="fantasy">
+        🔮 Fantasy <span class="filter-count" id="count-fantasy">2</span>
+      </button>
+      <button class="filter-btn" data-genre="romance">
+        🌹 Romance <span class="filter-count" id="count-romance">2</span>
+      </button>
+      <button class="filter-btn" data-genre="mystery">
+        🕵️ Mystery <span class="filter-count" id="count-mystery">2</span>
+      </button>
+      <button class="filter-btn" data-genre="sci-fi">
+        🚀 Sci-Fi <span class="filter-count" id="count-sci-fi">2</span>
+      </button>
+    </div>
+
+    <!-- Book Grid -->
+    <section class="grid-section" aria-label="Book library">
+      <div class="book-grid" id="book-grid">
+        <!-- Populated by library.js -->
+      </div>
+
+      <!-- Empty state (shown by JS) -->
+      <div class="empty-state" id="empty-state" aria-live="polite">
+        <div class="empty-state__icon">📭</div>
+        <p class="empty-state__title">No novels found</p>
+        <p class="empty-state__sub">Try a different search term or category.</p>
+      </div>
+    </section>
+
+  </div><!-- /.page -->
+
+  <!-- Footer -->
+  <footer>
+    <div class="footer-bar">
+      <span>© 2025 CloudNovel. All rights reserved.</span>
+      <a href="#">Privacy Policy</a>
+    </div>
+  </footer>
+
+  <script src="js/library.js"></script>
+</body>
+</html>

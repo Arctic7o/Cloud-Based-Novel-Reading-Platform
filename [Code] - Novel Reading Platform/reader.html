@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reader — CloudNovel</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Lora:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    /* ── CSS Variables ───────────────────────────────────────── */
+    :root {
+      --reader-bg:        #0f172a;
+      --reader-surface:   #1a2540;
+      --reader-border:    rgba(255,255,255,0.07);
+      --reader-text:      #e2e8f0;
+      --reader-text-dim:  #64748b;
+      --reader-accent:    #6366f1;
+      --reader-accent-glow: rgba(99,102,241,0.25);
+      --toolbar-bg:       rgba(15,23,42,0.82);
+      --font-size:        18px;
+      --line-height:      1.9;
+      --content-width:    680px;
+      --toolbar-h:        60px;
+      --bottom-bar-h:     64px;
+      --transition:       0.25s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* Light theme overrides */
+    [data-theme="light"] {
+      --reader-bg:       #faf8f5;
+      --reader-surface:  #f0ebe3;
+      --reader-border:   rgba(0,0,0,0.08);
+      --reader-text:     #1c1917;
+      --reader-text-dim: #78716c;
+      --toolbar-bg:      rgba(250,248,245,0.88);
+    }
+
+    /* Sepia theme */
+    [data-theme="sepia"] {
+      --reader-bg:       #f5f0e8;
+      --reader-surface:  #ede6d6;
+      --reader-border:   rgba(120,90,40,0.12);
+      --reader-text:     #3d2b1f;
+      --reader-text-dim: #9c7a5a;
+      --toolbar-bg:      rgba(245,240,232,0.9);
+    }
+
+    /* ── Reset ───────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: 'Poppins', sans-serif;
+      background: var(--reader-bg);
+      color: var(--reader-text);
+      transition: background var(--transition), color var(--transition);
+      overflow: hidden; /* page scroll is on .reader-body */
+    }
+
+    /* ── Full layout stack ───────────────────────────────────── */
+    .reader-layout {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       TOP TOOLBAR
+    ══════════════════════════════════════════════════════════ */
+    .toolbar {
+      height: var(--toolbar-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0 1.5rem;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      border-bottom: 1px solid var(--reader-border);
+      flex-shrink: 0;
+      z-index: 10;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    /* Left: back button */
+    .toolbar__left {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex: 1;
+    }
+
+    .btn-back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.42rem 0.9rem;
+      border-radius: 999px;
+      border: 1px solid var(--reader-border);
+      background: transparent;
+      color: var(--reader-text-dim);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-decoration: none;
+      transition: color var(--transition), background var(--transition),
+                  border-color var(--transition), box-shadow var(--transition);
+      white-space: nowrap;
+    }
+    .btn-back:hover {
+      color: var(--reader-accent);
+      background: var(--reader-accent-glow);
+      border-color: var(--reader-accent);
+      box-shadow: 0 0 12px var(--reader-accent-glow);
+    }
+
+    /* Center: title */
+    .toolbar__center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .toolbar__title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      color: var(--reader-text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 280px;
+      transition: color var(--transition);
+    }
+    .toolbar__chapter {
+      font-size: 0.68rem;
+      color: var(--reader-text-dim);
+      font-weight: 400;
+    }
+
+    /* Right: actions */
+    .toolbar__right {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      flex: 1;
+      justify-content: flex-end;
+    }
+
+    .toolbar-btn {
+      width: 36px; height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      border: 1px solid var(--reader-border);
+      background: transparent;
+      color: var(--reader-text-dim);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: color var(--transition), background var(--transition),
+                  border-color var(--transition), box-shadow var(--transition), transform 0.15s;
+      position: relative;
+    }
+    .toolbar-btn:hover {
+      color: var(--reader-text);
+      background: var(--reader-surface);
+      border-color: rgba(255,255,255,0.12);
+      transform: translateY(-1px);
+    }
+    .toolbar-btn.active {
+      color: var(--reader-accent);
+      background: var(--reader-accent-glow);
+      border-color: var(--reader-accent);
+      box-shadow: 0 0 10px var(--reader-accent-glow);
+    }
+    .toolbar-btn[title]:hover::after {
+      content: attr(title);
+      position: absolute;
+      top: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1e293b;
+      color: #e2e8f0;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      white-space: nowrap;
+      border: 1px solid rgba(255,255,255,0.08);
+      pointer-events: none;
+      z-index: 99;
+    }
+
+    /* Theme selector pill */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      background: var(--reader-surface);
+      border: 1px solid var(--reader-border);
+      border-radius: 999px;
+      padding: 3px;
+      gap: 2px;
+    }
+    .theme-pill {
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      border: none;
+      background: transparent;
+      color: var(--reader-text-dim);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background var(--transition), color var(--transition);
+      white-space: nowrap;
+    }
+    .theme-pill.active {
+      background: var(--reader-accent);
+      color: #fff;
+      box-shadow: 0 0 8px var(--reader-accent-glow);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       READING PROGRESS BAR
+    ══════════════════════════════════════════════════════════ */
+    .progress-track {
+      height: 2px;
+      background: var(--reader-border);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--reader-accent), #818cf8);
+      border-radius: 2px;
+      transition: width 0.3s ease;
+      width: 0%;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       READING BODY (scrollable)
+    ══════════════════════════════════════════════════════════ */
+    .reader-body {
+      flex: 1;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      position: relative;
+    }
+
+    /* Custom scrollbar */
+    .reader-body::-webkit-scrollbar { width: 5px; }
+    .reader-body::-webkit-scrollbar-track { background: transparent; }
+    .reader-body::-webkit-scrollbar-thumb {
+      background: var(--reader-accent);
+      border-radius: 999px;
+      opacity: 0.4;
+    }
+
+    /* Page fade-in animation */
+    @keyframes page-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Chapter header inside content */
+    .chapter-header {
+      text-align: center;
+      padding: 3rem 0 2rem;
+      margin-bottom: 0.5rem;
+      border-bottom: 1px solid var(--reader-border);
+      animation: page-in 0.5s ease both;
+    }
+    .chapter-header__label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--reader-accent);
+      margin-bottom: 0.6rem;
+    }
+    .chapter-header__title {
+      font-family: 'Lora', Georgia, serif;
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 500;
+      color: var(--reader-text);
+      letter-spacing: -0.01em;
+      transition: color var(--transition);
+    }
+    .chapter-header__ornament {
+      margin-top: 1rem;
+      color: var(--reader-text-dim);
+      font-size: 0.85rem;
+      letter-spacing: 0.3em;
+    }
+
+    /* Content area */
+    .reader-content {
+      max-width: var(--content-width);
+      margin: 0 auto;
+      padding: 0 2rem 2rem;
+    }
+
+    .reader-text {
+      font-family: 'Lora', Georgia, serif;
+      font-size: var(--font-size);
+      line-height: var(--line-height);
+      color: var(--reader-text);
+      transition: font-size 0.2s ease, color var(--transition), line-height 0.2s;
+    }
+
+    .reader-text p {
+      margin-bottom: 1.5em;
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    .reader-text p:first-child::first-letter {
+      font-size: 3.4em;
+      font-family: 'Lora', Georgia, serif;
+      font-weight: 500;
+      float: left;
+      line-height: 0.75;
+      margin: 0.08em 0.1em 0 0;
+      color: var(--reader-accent);
+    }
+
+    .reader-text em { font-style: italic; }
+    .reader-text strong { font-weight: 600; color: var(--reader-text); }
+
+    /* ══════════════════════════════════════════════════════════
+       BOTTOM CONTROLS
+    ══════════════════════════════════════════════════════════ */
+    .bottom-bar {
+      height: var(--bottom-bar-h);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      padding: 0 1.5rem;
+      background: var(--toolbar-bg);
+      backdrop-filter: blur(18px) saturate(1.4);
+      -webkit-backdrop-filter: blur(18px) saturate(1.4);
+      border-top: 1px solid var(--reader-border);
+      flex-shrink: 0;
+      position: relative;
+      transition: background var(--transition), border-color var(--transition);
+    }
+
+    .page-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.52rem 1.3rem;
+      border-radius: 999px;
+      border: 1px solid var(--reader-border);
+      background: var(--reader-surface);
+      color: var(--reader-text-dim);
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .page-btn:hover:not(:disabled) {
+      color: var(--reader-accent);
+      border-color: var(--reader-accent);
+      background: var(--reader-accent-glow);
+      box-shadow: 0 0 14px var(--reader-accent-glow);
+      transform: translateY(-1px);
+    }
+    .page-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .page-indicator {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.1rem;
+      min-width: 100px;
+    }
+    .page-num {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--reader-text);
+      letter-spacing: -0.01em;
+    }
+    .page-total {
+      font-size: 0.65rem;
+      color: var(--reader-text-dim);
+      letter-spacing: 0.04em;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       RIGHT SIDE FONT CONTROLS
+    ══════════════════════════════════════════════════════════ */
+    .side-controls {
+      position: fixed;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 20;
+    }
+
+    .side-btn {
+      width: 40px; height: 40px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      border: 1px solid var(--reader-border);
+      background: var(--reader-surface);
+      color: var(--reader-text-dim);
+      font-family: 'Poppins', sans-serif;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      backdrop-filter: blur(10px);
+    }
+    .side-btn:hover:not(:disabled) {
+      color: var(--reader-accent);
+      border-color: var(--reader-accent);
+      background: var(--reader-accent-glow);
+      box-shadow: 0 0 12px var(--reader-accent-glow);
+      transform: scale(1.08);
+    }
+    .side-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    .side-btn-label {
+      font-size: 0.55rem;
+      font-weight: 600;
+      color: var(--reader-text-dim);
+      text-align: center;
+      letter-spacing: 0.04em;
+    }
+
+    .side-group {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.25rem;
+      background: var(--reader-surface);
+      border: 1px solid var(--reader-border);
+      border-radius: 14px;
+      padding: 0.5rem;
+    }
+
+    .font-size-display {
+      font-size: 0.65rem;
+      font-weight: 700;
+      color: var(--reader-accent);
+      min-width: 28px;
+      text-align: center;
+    }
+
+    .side-divider {
+      width: 20px; height: 1px;
+      background: var(--reader-border);
+      margin: 0.1rem auto;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       BOOKMARK TOAST
+    ══════════════════════════════════════════════════════════ */
+    .reader-toast {
+      position: fixed;
+      top: calc(var(--toolbar-h) + 1rem);
+      left: 50%;
+      transform: translateX(-50%) translateY(-8px);
+      background: var(--reader-surface);
+      border: 1px solid var(--reader-border);
+      border-left: 3px solid var(--reader-accent);
+      border-radius: 10px;
+      padding: 0.65rem 1.2rem;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--reader-text);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s ease;
+      z-index: 200;
+      white-space: nowrap;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    }
+    .reader-toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       FOCUS MODE (hide chrome on inactivity)
+    ══════════════════════════════════════════════════════════ */
+    .reader-layout.focus-mode .toolbar,
+    .reader-layout.focus-mode .bottom-bar {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-4px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+    }
+    .reader-layout.focus-mode .bottom-bar {
+      transform: translateY(4px);
+    }
+    .reader-layout.focus-mode .side-controls {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       KEYBOARD HINT
+    ══════════════════════════════════════════════════════════ */
+    .kbd-hint {
+      position: fixed;
+      bottom: calc(var(--bottom-bar-h) + 0.75rem);
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 1.25rem;
+      font-size: 0.68rem;
+      color: var(--reader-text-dim);
+      pointer-events: none;
+      opacity: 0.6;
+    }
+    .kbd-hint kbd {
+      display: inline-block;
+      padding: 0.1rem 0.4rem;
+      border: 1px solid var(--reader-border);
+      border-radius: 4px;
+      font-family: 'Poppins', monospace;
+      font-size: 0.65rem;
+      background: var(--reader-surface);
+      color: var(--reader-text-dim);
+    }
+
+    /* ══════════════════════════════════════════════════════════
+       RESPONSIVE
+    ══════════════════════════════════════════════════════════ */
+    @media (max-width: 768px) {
+      :root { --content-width: 100%; }
+
+      .reader-content { padding: 0 1.25rem 1.5rem; }
+      .theme-toggle   { display: none; }
+      .toolbar__title { max-width: 180px; font-size: 0.82rem; }
+      .btn-back span  { display: none; }
+
+      .side-controls {
+        right: 0.6rem;
+      }
+
+      .kbd-hint { display: none; }
+    }
+
+    @media (max-width: 480px) {
+      .page-btn .btn-text { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="reader-layout" id="reader-layout">
+
+    <!-- ── TOP TOOLBAR ─────────────────────────────────────── -->
+    <header class="toolbar" id="toolbar">
+      <div class="toolbar__left">
+        <a href="library.html" class="btn-back" id="btn-back" aria-label="Back to Library">
+          ← <span>Library</span>
+        </a>
+      </div>
+
+      <div class="toolbar__center">
+        <div class="toolbar__title" id="toolbar-title">Loading…</div>
+        <div class="toolbar__chapter" id="toolbar-chapter">Chapter 1</div>
+      </div>
+
+      <div class="toolbar__right">
+        <!-- Bookmark -->
+        <button class="toolbar-btn" id="btn-bookmark" title="Bookmark page" aria-label="Bookmark this page">
+          🔖
+        </button>
+
+        <!-- Theme switcher -->
+        <div class="theme-toggle" role="group" aria-label="Choose reading theme">
+          <button class="theme-pill active" data-theme="dark"  aria-pressed="true">Dark</button>
+          <button class="theme-pill"        data-theme="sepia" aria-pressed="false">Sepia</button>
+          <button class="theme-pill"        data-theme="light" aria-pressed="false">Light</button>
+        </div>
+
+        <!-- Focus mode -->
+        <button class="toolbar-btn" id="btn-focus" title="Focus mode" aria-label="Toggle focus mode">
+          ◎
+        </button>
+      </div>
+    </header>
+
+    <!-- Reading progress bar -->
+    <div class="progress-track" aria-hidden="true">
+      <div class="progress-fill" id="progress-fill"></div>
+    </div>
+
+    <!-- ── READING BODY ─────────────────────────────────────── -->
+    <main class="reader-body" id="reader-body" tabindex="0">
+      <div class="reader-content">
+
+        <!-- Chapter header -->
+        <div class="chapter-header" id="chapter-header">
+          <div class="chapter-header__label" id="ch-label">Chapter 1</div>
+          <h1 class="chapter-header__title" id="ch-title">The First Page</h1>
+          <div class="chapter-header__ornament">❧ ✦ ❧</div>
+        </div>
+
+        <!-- Novel text — populated by reader.js -->
+        <div class="reader-text" id="reader-text" aria-live="polite">
+          <!-- Pages injected here -->
+        </div>
+
+      </div>
+    </main>
+
+    <!-- ── BOTTOM PAGINATION BAR ───────────────────────────── -->
+    <footer class="bottom-bar" id="bottom-bar">
+      <button class="page-btn" id="btn-prev" aria-label="Previous page" disabled>
+        ← <span class="btn-text">Previous</span>
+      </button>
+
+      <div class="page-indicator" aria-live="polite">
+        <span class="page-num" id="page-num">1</span>
+        <span class="page-total" id="page-total">of 8 pages</span>
+      </div>
+
+      <button class="page-btn" id="btn-next" aria-label="Next page">
+        <span class="btn-text">Next</span> →
+      </button>
+    </footer>
+
+  </div><!-- /.reader-layout -->
+
+  <!-- ── SIDE FONT CONTROLS ─────────────────────────────────── -->
+  <div class="side-controls" id="side-controls" aria-label="Font size controls">
+    <div class="side-group">
+      <button class="side-btn" id="btn-font-up" title="Increase font size" aria-label="Increase font size">A+</button>
+      <div class="side-divider"></div>
+      <div class="font-size-display" id="font-size-display">18</div>
+      <div class="side-divider"></div>
+      <button class="side-btn" id="btn-font-down" title="Decrease font size" aria-label="Decrease font size">A−</button>
+    </div>
+  </div>
+
+  <!-- Keyboard shortcuts hint -->
+  <div class="kbd-hint" id="kbd-hint" aria-hidden="true">
+    <span><kbd>←</kbd><kbd>→</kbd> pages</span>
+    <span><kbd>B</kbd> bookmark</span>
+    <span><kbd>F</kbd> focus</span>
+    <span><kbd>+</kbd><kbd>−</kbd> font</span>
+  </div>
+
+  <!-- Toast notification -->
+  <div class="reader-toast" id="reader-toast" role="status" aria-live="polite"></div>
+
+  <script src="js/reader.js"></script>
+</body>
+</html>

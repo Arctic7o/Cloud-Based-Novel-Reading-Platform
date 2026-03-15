@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="CloudNovel — Read your favorite novels anytime, anywhere. A modern cloud-based reading platform with thousands of titles." />
+  <title>CloudNovel — Read Anywhere, Anytime</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&display=swap" rel="stylesheet" />
+
+  <!-- Project stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <style>
+    /* ── Page-level tokens & resets ─────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:           #0f172a;
+      --bg-deep:      #080f1e;
+      --card:         #1e293b;
+      --card-hover:   #243347;
+      --accent:       #6366f1;
+      --accent-glow:  rgba(99,102,241,0.32);
+      --accent-dim:   rgba(99,102,241,0.12);
+      --accent-light: #818cf8;
+      --text:         #ffffff;
+      --text-muted:   #94a3b8;
+      --text-faint:   #475569;
+      --border:       rgba(99,102,241,0.18);
+      --border-soft:  rgba(255,255,255,0.06);
+      --radius:       14px;
+      --radius-lg:    22px;
+      --radius-pill:  999px;
+      --ease:         cubic-bezier(0.4,0,0.2,1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      overflow-x: hidden;
+    }
+
+    img { max-width: 100%; display: block; }
+    a   { color: inherit; text-decoration: none; }
+    ul  { list-style: none; }
+    button { cursor: pointer; font-family: 'Poppins', sans-serif; }
+
+    /* Ambient top-of-page glow */
+    body::before {
+      content: '';
+      position: fixed;
+      top: -220px; left: 50%;
+      transform: translateX(-50%);
+      width: 960px; height: 560px;
+      background: radial-gradient(ellipse, rgba(99,102,241,0.12) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: var(--bg-deep); }
+    ::-webkit-scrollbar-thumb { background: var(--accent); border-radius: var(--radius-pill); }
+
+    /* ── Utility ─────────────────────────────────────────────── */
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+
+    /* Section spacing */
+    .section { padding: 6rem 0; position: relative; z-index: 1; }
+
+    .section__label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--accent-light);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.7rem;
+    }
+    .section__label::before {
+      content: '';
+      width: 20px; height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .section__title {
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      font-weight: 800;
+      letter-spacing: -0.028em;
+      line-height: 1.15;
+      margin-bottom: 0.75rem;
+    }
+
+    .section__desc {
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      max-width: 520px;
+      font-weight: 300;
+    }
+
+    /* ── Buttons ─────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.7rem 1.5rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.9rem;
+      font-weight: 600;
+      border: none;
+      transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease),
+                  background 0.2s var(--ease), color 0.2s var(--ease);
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+    }
+    .btn--primary {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 0 0 var(--accent-glow);
+    }
+    .btn--primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 24px var(--accent-glow), 0 4px 20px rgba(0,0,0,0.3);
+    }
+    .btn--primary:active { transform: translateY(0); }
+    /* Shimmer sweep */
+    .btn--primary::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 55%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.16), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.55s var(--ease);
+    }
+    .btn--primary:hover::after { left: 140%; }
+
+    .btn--ghost {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-soft);
+    }
+    .btn--ghost:hover {
+      color: var(--text);
+      background: var(--accent-dim);
+      border-color: var(--border);
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+    .btn--outline {
+      background: transparent;
+      color: var(--accent-light);
+      border: 1px solid var(--accent);
+    }
+    .btn--outline:hover {
+      background: var(--accent);
+      color: #fff;
+      box-shadow: 0 0 20px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+    .btn--lg {
+      padding: 0.9rem 2.2rem;
+      font-size: 1rem;
+      border-radius: var(--radius);
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       NAVBAR
+    ═══════════════════════════════════════════════════════════ */
+    .navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 100;
+      height: 68px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      padding: 0 2rem;
+      background: rgba(15,23,42,0.72);
+      backdrop-filter: blur(22px) saturate(1.5);
+      -webkit-backdrop-filter: blur(22px) saturate(1.5);
+      border-bottom: 1px solid var(--border-soft);
+      transition: background 0.3s var(--ease), box-shadow 0.3s var(--ease);
+    }
+    .navbar.scrolled {
+      background: rgba(15,23,42,0.97);
+      box-shadow: 0 4px 36px rgba(0,0,0,0.5);
+    }
+
+    /* Logo */
+    .navbar__logo {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 1.3rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      flex-shrink: 0;
+    }
+    .navbar__logo-icon {
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+      box-shadow: 0 0 18px var(--accent-glow);
+      transition: box-shadow 0.2s;
+    }
+    .navbar__logo:hover .navbar__logo-icon { box-shadow: 0 0 28px var(--accent-glow); }
+    .navbar__logo span { color: var(--accent-light); }
+
+    /* Nav links */
+    .navbar__links {
+      display: flex;
+      align-items: center;
+      gap: 0.15rem;
+    }
+    .navbar__links a {
+      padding: 0.45rem 0.9rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      transition: color 0.2s, background 0.2s;
+    }
+    .navbar__links a:hover,
+    .navbar__links a.active {
+      color: var(--text);
+      background: var(--accent-dim);
+    }
+    .navbar__links a.active { color: var(--accent-light); }
+
+    /* Navbar actions */
+    .navbar__actions { display: flex; align-items: center; gap: 0.75rem; flex-shrink: 0; }
+
+    /* Hamburger */
+    .navbar__hamburger {
+      display: none;
+      flex-direction: column;
+      gap: 5px;
+      background: none;
+      border: none;
+      padding: 4px;
+    }
+    .navbar__hamburger span {
+      display: block;
+      width: 22px; height: 2px;
+      background: var(--text-muted);
+      border-radius: 2px;
+      transition: transform 0.3s var(--ease), opacity 0.2s;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       HERO
+    ═══════════════════════════════════════════════════════════ */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      padding: 8rem 1.5rem 5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Orbs */
+    .hero__orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(90px);
+      pointer-events: none;
+      animation: orb-drift 10s ease-in-out infinite alternate;
+    }
+    .hero__orb--1 {
+      width: 560px; height: 560px;
+      background: radial-gradient(circle, rgba(99,102,241,0.22) 0%, transparent 70%);
+      top: -160px; left: -100px;
+    }
+    .hero__orb--2 {
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%);
+      bottom: -80px; right: -60px;
+      animation-delay: -5s;
+    }
+    .hero__orb--3 {
+      width: 260px; height: 260px;
+      background: radial-gradient(circle, rgba(99,102,241,0.1) 0%, transparent 70%);
+      top: 45%; left: 55%;
+      animation-delay: -2.5s;
+    }
+    @keyframes orb-drift {
+      from { transform: translate(0, 0) scale(1); }
+      to   { transform: translate(35px, 25px) scale(1.1); }
+    }
+
+    .hero__inner {
+      position: relative; z-index: 1;
+      max-width: 1200px; margin: 0 auto; width: 100%;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    /* Text side */
+    .hero__eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent-light);
+      background: var(--accent-dim);
+      border: 1px solid var(--border);
+      padding: 0.35rem 0.9rem;
+      border-radius: var(--radius-pill);
+      margin-bottom: 1.4rem;
+      animation: fade-up 0.7s 0.1s var(--ease) both;
+    }
+    .hero__eyebrow::before {
+      content: '';
+      width: 6px; height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 7px var(--accent);
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity:1; transform:scale(1); }
+      50%      { opacity:0.4; transform:scale(0.65); }
+    }
+
+    .hero__title {
+      font-size: clamp(2.4rem, 5vw, 3.9rem);
+      font-weight: 800;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.3rem;
+      animation: fade-up 0.75s 0.2s var(--ease) both;
+    }
+    .hero__title em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent-light) 0%, #c084fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero__desc {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      max-width: 480px;
+      margin-bottom: 2.2rem;
+      font-weight: 300;
+      line-height: 1.75;
+      animation: fade-up 0.7s 0.32s var(--ease) both;
+    }
+
+    .hero__actions {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 2.8rem;
+      animation: fade-up 0.65s 0.42s var(--ease) both;
+    }
+
+    /* Stats strip */
+    .hero__stats {
+      display: flex;
+      gap: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-soft);
+      animation: fade-up 0.65s 0.52s var(--ease) both;
+    }
+    .hero__stat-value {
+      font-size: 1.65rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .hero__stat-label {
+      font-size: 0.72rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.1rem;
+    }
+
+    /* Visual side — stacked book covers */
+    .hero__visual {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      animation: fade-left 0.9s 0.3s var(--ease) both;
+    }
+
+    .hero__book-scene {
+      position: relative;
+      width: 300px; height: 380px;
+    }
+
+    .hero__book-cover {
+      position: absolute;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+      transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease);
+    }
+    .hero__book-cover img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+    .hero__book-cover:nth-child(1) {
+      width: 165px; height: 240px;
+      top: 60px; right: 20px;
+      transform: rotate(6deg);
+      z-index: 1;
+    }
+    .hero__book-cover:nth-child(2) {
+      width: 175px; height: 255px;
+      top: 30px; right: 60px;
+      transform: rotate(2deg);
+      z-index: 2;
+    }
+    .hero__book-cover:nth-child(3) {
+      width: 185px; height: 268px;
+      top: 0; right: 95px;
+      transform: rotate(-3deg);
+      z-index: 3;
+      border: 1px solid var(--border);
+    }
+    .hero__book-scene:hover .hero__book-cover:nth-child(1) { transform: rotate(10deg) translateY(-8px); }
+    .hero__book-scene:hover .hero__book-cover:nth-child(2) { transform: rotate(4deg)  translateY(-14px); }
+    .hero__book-scene:hover .hero__book-cover:nth-child(3) { transform: rotate(-5deg) translateY(-18px); }
+
+    /* Floating badge on visual */
+    .hero__badge {
+      position: absolute;
+      bottom: 20px; left: 0;
+      background: rgba(30,41,59,0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 0.75rem 1.1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      font-size: 0.82rem;
+      font-weight: 600;
+      animation: float-badge 4s ease-in-out infinite;
+      z-index: 10;
+    }
+    .hero__badge-icon {
+      width: 34px; height: 34px;
+      background: var(--accent-dim);
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font-size: 1rem;
+    }
+    .hero__badge-sub { font-size: 0.68rem; color: var(--text-muted); font-weight: 400; }
+    @keyframes float-badge {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    /* Keyframes used across hero */
+    @keyframes fade-up {
+      from { opacity:0; transform:translateY(28px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    @keyframes fade-left {
+      from { opacity:0; transform:translateX(40px) scale(0.95); }
+      to   { opacity:1; transform:translateX(0) scale(1); }
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       POPULAR NOVELS SECTION
+    ═══════════════════════════════════════════════════════════ */
+    .novels-section { background: var(--bg); }
+
+    .novels-header {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+      flex-wrap: wrap;
+    }
+
+    /* Book grid */
+    .novels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 1.75rem;
+    }
+
+    /* Book card */
+    .book-card {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .book-card__cover {
+      position: relative;
+      aspect-ratio: 2/3;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--card);
+      border: 1px solid var(--border-soft);
+      will-change: transform;
+      transition: transform 0.38s cubic-bezier(0.34,1.56,0.64,1),
+                  box-shadow 0.38s var(--ease);
+    }
+    .book-card:hover .book-card__cover {
+      transform: scale(1.05) translateY(-9px);
+      box-shadow: 0 28px 56px rgba(0,0,0,0.6),
+                  0 0 0 1px var(--border),
+                  0 0 30px rgba(99,102,241,0.15);
+    }
+    .book-card__cover img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      transition: filter 0.35s;
+    }
+    .book-card:hover .book-card__cover img { filter: brightness(1.07) saturate(1.1); }
+
+    /* Genre badge */
+    .book-card__badge {
+      position: absolute;
+      top: 8px; left: 8px;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255,255,255,0.14);
+    }
+    .badge--fantasy  { background: rgba(139,92,246,0.7);  color: #ede9fe; }
+    .badge--romance  { background: rgba(236,72,153,0.7);  color: #fce7f3; }
+    .badge--mystery  { background: rgba(251,146,60,0.7);  color: #fff7ed; }
+    .badge--sci-fi   { background: rgba(6,182,212,0.7);   color: #ecfeff; }
+    .badge--thriller { background: rgba(239,68,68,0.7);   color: #fee2e2; }
+    .badge--drama    { background: rgba(52,211,153,0.7);  color: #ecfdf5; }
+
+    /* Hover overlay */
+    .book-card__overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(15,23,42,0.95) 0%, rgba(15,23,42,0.3) 45%, transparent 70%);
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      opacity: 0;
+      transition: opacity 0.28s;
+    }
+    .book-card:hover .book-card__overlay { opacity: 1; }
+    .book-card__overlay-btn {
+      width: 100%;
+      padding: 0.52rem;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border: none;
+      border-radius: 9px;
+      color: #fff;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+      box-shadow: 0 0 16px var(--accent-glow);
+    }
+
+    /* Card text */
+    .book-card__title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      line-height: 1.3;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: color 0.2s;
+    }
+    .book-card:hover .book-card__title { color: var(--accent-light); }
+    .book-card__author {
+      font-size: 0.76rem;
+      color: var(--text-faint);
+    }
+    .book-card__meta {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .book-card__rating {
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: #fbbf24;
+      display: flex;
+      align-items: center;
+      gap: 0.2rem;
+    }
+    .book-card__reads { font-size: 0.7rem; color: var(--text-faint); }
+
+    /* ═══════════════════════════════════════════════════════════
+       FEATURES SECTION
+    ═══════════════════════════════════════════════════════════ */
+    .features-section {
+      background: linear-gradient(to bottom, var(--bg), var(--bg-deep));
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .feature-card {
+      background: var(--card);
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-lg);
+      padding: 2.25rem 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: transform 0.32s var(--ease),
+                  box-shadow 0.32s var(--ease),
+                  border-color 0.32s var(--ease),
+                  background 0.32s var(--ease);
+    }
+    /* Inner glow on hover */
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: radial-gradient(ellipse 55% 35% at 50% 0%, var(--accent-dim) 0%, transparent 70%);
+      opacity: 0;
+      transition: opacity 0.32s;
+    }
+    .feature-card:hover {
+      transform: translateY(-9px);
+      border-color: var(--border);
+      background: var(--card-hover);
+      box-shadow: 0 22px 52px rgba(0,0,0,0.45), 0 0 30px var(--accent-glow);
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-card__icon {
+      width: 56px; height: 56px;
+      background: var(--accent-dim);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      font-size: 1.5rem;
+      margin-bottom: 1.4rem;
+      transition: background 0.3s, box-shadow 0.3s;
+      position: relative; z-index: 1;
+    }
+    .feature-card:hover .feature-card__icon {
+      background: var(--accent);
+      box-shadow: 0 0 24px var(--accent-glow);
+    }
+
+    .feature-card__title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin-bottom: 0.65rem;
+      letter-spacing: -0.01em;
+      position: relative; z-index: 1;
+    }
+    .feature-card__desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+      position: relative; z-index: 1;
+    }
+
+    /* Numbered accent corner */
+    .feature-card__num {
+      position: absolute;
+      top: 1.5rem; right: 1.75rem;
+      font-size: 3.5rem;
+      font-weight: 900;
+      color: rgba(99,102,241,0.06);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      pointer-events: none;
+      transition: color 0.3s;
+    }
+    .feature-card:hover .feature-card__num { color: rgba(99,102,241,0.12); }
+
+    /* ═══════════════════════════════════════════════════════════
+       CTA BANNER
+    ═══════════════════════════════════════════════════════════ */
+    .cta-section { padding: 5rem 0; }
+
+    .cta-inner {
+      background: linear-gradient(135deg, #1e1b4b 0%, var(--card) 55%, var(--bg) 100%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 4rem 2.5rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .cta-inner::before {
+      content: '';
+      position: absolute;
+      top: -80px; left: 50%;
+      transform: translateX(-50%);
+      width: 500px; height: 240px;
+      background: radial-gradient(ellipse, var(--accent-glow) 0%, transparent 70%);
+      filter: blur(48px);
+      pointer-events: none;
+    }
+    .cta-inner__title {
+      font-size: clamp(1.7rem, 3.5vw, 2.4rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      margin-bottom: 0.8rem;
+      position: relative;
+    }
+    .cta-inner__desc {
+      color: var(--text-muted);
+      max-width: 460px;
+      margin: 0 auto 2.2rem;
+      font-size: 0.95rem;
+      position: relative;
+    }
+    .cta-inner__actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+      flex-wrap: wrap;
+      position: relative;
+    }
+
+    /* ═══════════════════════════════════════════════════════════
+       FOOTER
+    ═══════════════════════════════════════════════════════════ */
+    .footer {
+      background: var(--bg-deep);
+      border-top: 1px solid var(--border-soft);
+      padding: 4rem 1.5rem 2rem;
+    }
+
+    .footer__inner {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 1fr;
+      gap: 3rem;
+      margin-bottom: 3rem;
+    }
+
+    .footer__logo {
+      display: flex;
+      align-items: center;
+      gap: 0.55rem;
+      font-size: 1.2rem;
+      font-weight: 800;
+      margin-bottom: 0.9rem;
+    }
+    .footer__logo-icon {
+      width: 30px; height: 30px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 0.9rem;
+      box-shadow: 0 0 14px var(--accent-glow);
+    }
+    .footer__tagline {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      max-width: 240px;
+      margin-bottom: 1.4rem;
+      font-weight: 300;
+    }
+
+    .footer__socials { display: flex; gap: 0.55rem; }
+    .footer__social {
+      width: 36px; height: 36px;
+      background: var(--card);
+      border: 1px solid var(--border-soft);
+      border-radius: 9px;
+      display: grid;
+      place-items: center;
+      font-size: 0.95rem;
+      transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .footer__social:hover {
+      background: var(--accent-dim);
+      border-color: var(--border);
+      box-shadow: 0 0 12px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .footer__col-title {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 1.2rem;
+    }
+    .footer__col-links { display: flex; flex-direction: column; gap: 0.55rem; }
+    .footer__col-links a {
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      display: inline-block;
+      transition: color 0.2s, transform 0.2s;
+    }
+    .footer__col-links a:hover { color: var(--accent-light); transform: translateX(3px); }
+
+    .footer__bottom {
+      max-width: 1200px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-soft);
+    }
+    .footer__copy { font-size: 0.82rem; color: var(--text-faint); }
+    .footer__legal { display: flex; gap: 1.25rem; }
+    .footer__legal a { font-size: 0.82rem; color: var(--text-faint); transition: color 0.2s; }
+    .footer__legal a:hover { color: var(--accent-light); }
+
+    /* ── data-fade scroll reveal ─────────────────────────────── */
+    [data-fade], [data-fade="children"] > * {
+      opacity: 0;
+      transform: translateY(26px);
+      transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+    }
+    [data-fade].is-visible, [data-fade="children"] > *.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      .hero__inner { grid-template-columns: 1fr; text-align: center; }
+      .hero__desc, .hero__stats { justify-content: center; }
+      .hero__desc  { max-width: 100%; }
+      .hero__actions { justify-content: center; }
+      .hero__visual { display: none; }
+      .footer__inner { grid-template-columns: 1fr 1fr; gap: 2rem; }
+      .footer__brand { grid-column: 1 / -1; }
+    }
+
+    @media (max-width: 640px) {
+      .navbar { padding: 0 1rem; }
+      .navbar__links { display: none; }
+      .navbar__links.open {
+        display: flex;
+        flex-direction: column;
+        position: fixed;
+        inset: 68px 0 0;
+        background: rgba(15,23,42,0.98);
+        backdrop-filter: blur(20px);
+        padding: 2rem 1.5rem;
+        align-items: flex-start;
+        gap: 0.25rem;
+        z-index: 99;
+      }
+      .navbar__links.open a { font-size: 1.1rem; padding: 0.75rem 1rem; width: 100%; }
+      .navbar__hamburger { display: flex; }
+
+      .hero { padding: 7rem 1rem 4rem; }
+      .novels-grid { grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+      .features-grid { grid-template-columns: 1fr; }
+      .footer__inner { grid-template-columns: 1fr; }
+      .footer__bottom { flex-direction: column; align-items: flex-start; }
+      .novels-header { flex-direction: column; align-items: flex-start; }
+      .cta-inner { padding: 2.5rem 1.25rem; }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ══════════════════════════════════════════════════════════
+       NAVBAR
+  ══════════════════════════════════════════════════════════ -->
+  <nav class="navbar" id="navbar" role="navigation" aria-label="Main navigation">
+    <a href="index.html" class="navbar__logo" aria-label="CloudNovel Home">
+      <div class="navbar__logo-icon" aria-hidden="true">📖</div>
+      Cloud<span>Novel</span>
+    </a>
+
+    <ul class="navbar__links" id="navbar-links" role="menubar">
+      <li role="none"><a href="index.html"   class="active" role="menuitem">Home</a></li>
+      <li role="none"><a href="library.html"             role="menuitem">Library</a></li>
+      <li role="none"><a href="#features"                role="menuitem">Features</a></li>
+      <li role="none"><a href="#about"                   role="menuitem">About</a></li>
+    </ul>
+
+    <div class="navbar__actions">
+      <a href="login.html" class="btn btn--ghost" style="padding:0.45rem 1rem;font-size:0.82rem;">Login</a>
+      <a href="library.html" class="btn btn--primary" style="padding:0.45rem 1.1rem;font-size:0.82rem;">Get Started</a>
+      <button class="navbar__hamburger" id="navbar-hamburger"
+              aria-label="Toggle navigation" aria-expanded="false" aria-controls="navbar-links">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       HERO
+  ══════════════════════════════════════════════════════════ -->
+  <section class="hero" id="home" aria-label="Hero">
+    <div class="hero__orb hero__orb--1" aria-hidden="true"></div>
+    <div class="hero__orb hero__orb--2" aria-hidden="true"></div>
+    <div class="hero__orb hero__orb--3" aria-hidden="true"></div>
+
+    <div class="hero__inner">
+      <!-- Left: Text -->
+      <div class="hero__text">
+        <div class="hero__eyebrow" data-hero-eyebrow>✦ Cloud-Powered Reading</div>
+
+        <h1 class="hero__title" data-hero-title>
+          Read Your Favorite Novels<br />
+          <em>Anytime, Anywhere</em>
+        </h1>
+
+        <p class="hero__desc" data-hero-desc>
+          CloudNovel brings thousands of novels to your fingertips. Sync your progress
+          across devices, bookmark your favorite passages, and enjoy a distraction-free
+          reading experience — all powered by the cloud.
+        </p>
+
+        <div class="hero__actions" data-hero-actions>
+          <a href="library.html" class="btn btn--primary btn--lg">
+            ▶ Explore Library
+          </a>
+          <a href="login.html" class="btn btn--outline btn--lg">
+            Create Free Account
+          </a>
+        </div>
+
+        <div class="hero__stats">
+          <div class="hero__stat" data-hero-stat>
+            <div class="hero__stat-value">9</div>
+            <div class="hero__stat-label">Novels</div>
+          </div>
+          <div class="hero__stat" data-hero-stat>
+            <div class="hero__stat-value">4</div>
+            <div class="hero__stat-label">Readers</div>
+          </div>
+          <div class="hero__stat" data-hero-stat>
+            <div class="hero__stat-value">4.9★</div>
+            <div class="hero__stat-label">Rating</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Visual -->
+      <div class="hero__visual" data-hero-visual aria-hidden="true">
+        <div class="hero__book-scene">
+          <div class="hero__book-cover">
+            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=300&q=80"
+                 alt="" loading="lazy" />
+          </div>
+          <div class="hero__book-cover">
+            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&q=80"
+                 alt="" loading="lazy" />
+          </div>
+          <div class="hero__book-cover">
+            <img src="https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=300&q=80"
+                 alt="" loading="lazy" />
+          </div>
+        </div>
+        <!-- Floating badge -->
+        <div class="hero__badge">
+          <div class="hero__badge-icon">🔖</div>
+          <div>
+            <div>Now Reading</div>
+            <div class="hero__badge-sub">The Starless Crown · Ch. 4</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       POPULAR NOVELS
+  ══════════════════════════════════════════════════════════ -->
+  <section class="section novels-section" id="novels" aria-labelledby="novels-heading">
+    <div class="container">
+
+      <div class="novels-header">
+        <div>
+          <p class="section__label" data-fade>Popular This Week</p>
+          <h2 class="section__title" id="novels-heading" data-fade>
+            Trending Novels
+          </h2>
+          <p class="section__desc" data-fade>
+            Hand-picked reads loved by thousands of CloudNovel readers right now.
+          </p>
+        </div>
+        <a href="library.html" class="btn btn--outline" data-fade>View All →</a>
+      </div>
+
+      <div class="novels-grid" data-fade="children">
+
+        <!-- Card 1 -->
+        <a href="reader.html?id=1" class="book-card" aria-label="Read The Starless Crown by James Rollins">
+          <div class="book-card__cover">
+            <img src="https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80"
+                 alt="The Starless Crown cover" loading="lazy"
+                 onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(145deg,#312e81,#4c1d95)'" />
+            <span class="book-card__badge badge--fantasy">Fantasy</span>
+            <div class="book-card__overlay">
+              <button class="book-card__overlay-btn" tabindex="-1">▶ Read Now</button>
+            </div>
+          </div>
+          <div class="book-card__title">The Starless Crown</div>
+          <div class="book-card__author">James Rollins</div>
+          <div class="book-card__meta">
+            <span class="book-card__rating">★ 4.7</span>
+            <span class="book-card__reads">124k reads</span>
+          </div>
+        </a>
+
+        <!-- Card 2 -->
+        <a href="reader.html?id=2" class="book-card" aria-label="Read Midnight in Paris by Isabelle Fontaine">
+          <div class="book-card__cover">
+            <img src="https://images.unsplash.com/photo-1502602898657-3e91760cbb34?w=400&q=80"
+                 alt="Midnight in Paris cover" loading="lazy"
+                 onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(145deg,#9d174d,#be185d)'" />
+            <span class="book-card__badge badge--romance">Romance</span>
+            <div class="book-card__overlay">
+              <button class="book-card__overlay-btn" tabindex="-1">▶ Read Now</button>
+            </div>
+          </div>
+          <div class="book-card__title">Midnight in Paris</div>
+          <div class="book-card__author">Isabelle Fontaine</div>
+          <div class="book-card__meta">
+            <span class="book-card__rating">★ 4.5</span>
+            <span class="book-card__reads">89k reads</span>
+          </div>
+        </a>
+
+        <!-- Card 3 -->
+        <a href="reader.html?id=3" class="book-card" aria-label="Read The Obsidian Key by Daria Voss">
+          <div class="book-card__cover">
+            <img src="https://images.unsplash.com/photo-1519682337058-a94d519337bc?w=400&q=80"
+                 alt="The Obsidian Key cover" loading="lazy"
+                 onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(145deg,#92400e,#b45309)'" />
+            <span class="book-card__badge badge--mystery">Mystery</span>
+            <div class="book-card__overlay">
+              <button class="book-card__overlay-btn" tabindex="-1">▶ Read Now</button>
+            </div>
+          </div>
+          <div class="book-card__title">The Obsidian Key</div>
+          <div class="book-card__author">Daria Voss</div>
+          <div class="book-card__meta">
+            <span class="book-card__rating">★ 4.8</span>
+            <span class="book-card__reads">210k reads</span>
+          </div>
+        </a>
+
+        <!-- Card 4 -->
+        <a href="reader.html?id=4" class="book-card" aria-label="Read Neon Horizon by Ethan Cross">
+          <div class="book-card__cover">
+            <img src="https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=400&q=80"
+                 alt="Neon Horizon cover" loading="lazy"
+                 onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(145deg,#0e7490,#0891b2)'" />
+            <span class="book-card__badge badge--sci-fi">Sci-Fi</span>
+            <div class="book-card__overlay">
+              <button class="book-card__overlay-btn" tabindex="-1">▶ Read Now</button>
+            </div>
+          </div>
+          <div class="book-card__title">Neon Horizon</div>
+          <div class="book-card__author">Ethan Cross</div>
+          <div class="book-card__meta">
+            <span class="book-card__rating">★ 4.6</span>
+            <span class="book-card__reads">178k reads</span>
+          </div>
+        </a>
+
+        <!-- Card 5 -->
+        <a href="reader.html?id=5" class="book-card" aria-label="Read Ember &amp; Ash by Lyra Winthorpe">
+          <div class="book-card__cover">
+            <img src="https://images.unsplash.com/photo-1476275466078-4007374efbbe?w=400&q=80"
+                 alt="Ember and Ash cover" loading="lazy"
+                 onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(145deg,#7c3aed,#6d28d9)'" />
+            <span class="book-card__badge badge--fantasy">Fantasy</span>
+            <div class="book-card__overlay">
+              <button class="book-card__overlay-btn" tabindex="-1">▶ Read Now</button>
+            </div>
+          </div>
+          <div class="book-card__title">Ember &amp; Ash</div>
+          <div class="book-card__author">Lyra Winthorpe</div>
+          <div class="book-card__meta">
+            <span class="book-card__rating">★ 4.4</span>
+            <span class="book-card__reads">67k reads</span>
+          </div>
+        </a>
+
+        <!-- Card 6 -->
+        <a href="reader.html?id=6" class="book-card" aria-label="Read Letters Never Sent by Celine Morel">
+          <div class="book-card__cover">
+            <img src="https://images.unsplash.com/photo-1455390582262-044cdead277a?w=400&q=80"
+                 alt="Letters Never Sent cover" loading="lazy"
+                 onerror="this.style.display='none';this.parentElement.style.background='linear-gradient(145deg,#be185d,#db2777)'" />
+            <span class="book-card__badge badge--romance">Romance</span>
+            <div class="book-card__overlay">
+              <button class="book-card__overlay-btn" tabindex="-1">▶ Read Now</button>
+            </div>
+          </div>
+          <div class="book-card__title">Letters Never Sent</div>
+          <div class="book-card__author">Celine Morel</div>
+          <div class="book-card__meta">
+            <span class="book-card__rating">★ 4.9</span>
+            <span class="book-card__reads">305k reads</span>
+          </div>
+        </a>
+
+        <!-- Temporary Card 7 -->
+<a href="#" class="book-card">
+  <div class="book-card__cover">
+    <img src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?w=400&q=80" loading="lazy">
+    <span class="book-card__badge badge--thriller">Thriller</span>
+    <div class="book-card__overlay">
+      <button class="book-card__overlay-btn">▶ Read Now</button>
+    </div>
+  </div>
+  <div class="book-card__title">Shadow Protocol</div>
+  <div class="book-card__author">Marcus Vale</div>
+  <div class="book-card__meta">
+    <span class="book-card__rating">★ 4.6</span>
+    <span class="book-card__reads">95k reads</span>
+  </div>
+</a>
+
+<!-- Temporary Card 8 -->
+<a href="#" class="book-card">
+  <div class="book-card__cover">
+    <img src="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?w=400&q=80" loading="lazy">
+    <span class="book-card__badge badge--drama">Drama</span>
+    <div class="book-card__overlay">
+      <button class="book-card__overlay-btn">▶ Read Now</button>
+    </div>
+  </div>
+  <div class="book-card__title">Echoes of Silence</div>
+  <div class="book-card__author">Lena Hart</div>
+  <div class="book-card__meta">
+    <span class="book-card__rating">★ 4.3</span>
+    <span class="book-card__reads">54k reads</span>
+  </div>
+</a>
+
+<!-- Temporary Card 9 -->
+<a href="#" class="book-card">
+  <div class="book-card__cover">
+    <img src="https://images.unsplash.com/photo-1507842217343-583bb7270b66?w=400&q=80" loading="lazy">
+    <span class="book-card__badge badge--fantasy">Fantasy</span>
+    <div class="book-card__overlay">
+      <button class="book-card__overlay-btn">▶ Read Now</button>
+    </div>
+  </div>
+  <div class="book-card__title">Dragon of the North</div>
+  <div class="book-card__author">Arin Valen</div>
+  <div class="book-card__meta">
+    <span class="book-card__rating">★ 4.8</span>
+    <span class="book-card__reads">187k reads</span>
+  </div>
+</a>
+
+      </div><!-- /.novels-grid -->
+    </div>
+  </section>
+
+
+  <!-- ── MANGA SECTION ──────────────────────────────────────── -->
+<section class="section" id="manga" style="background:linear-gradient(to bottom,#0f172a,#080f1e)">
+  <div class="container">
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;margin-bottom:2.5rem">
+      <div>
+        <p class="section__label">Now Reading</p>
+        <h2 class="section__title">Manga <em style="background:linear-gradient(135deg,#6366f1,#8b5cf6,#06b6d4);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;font-style:normal">Universe</em></h2>
+        <p class="section__desc">Action, fantasy, romance — thousands of chapters free to read.</p>
+      </div>
+      <a href="manga-library.html" class="btn btn--outline">Browse All Manga →</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:1.5rem;margin-bottom:2rem" id="home-manga-grid">
+      <!-- Populated by script below -->
+    </div>
+    <div style="text-align:center;margin-top:1.5rem">
+      <a href="manga-upload.html" class="btn btn--primary btn--lg">✦ Upload Your Manga</a>
+    </div>
+  </div>
+</section>
+
+<!-- Add before </body> -->
+<script src="manga.js"></script>
+<script>
+  (function() {
+    const grid = document.getElementById('home-manga-grid');
+    if (!grid) return;
+    const manga = getAllManga().slice(0, 6);
+    manga.forEach((m, i) => {
+      const a = buildMangaCard(m, i);
+      grid.appendChild(a);
+    });
+  })();
+</script>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       FEATURES
+  ══════════════════════════════════════════════════════════ -->
+  <section class="section features-section" id="features" aria-labelledby="features-heading">
+    <div class="container">
+
+      <div style="max-width:540px;" data-fade>
+        <p class="section__label">Why CloudNovel</p>
+        <h2 class="section__title" id="features-heading">
+          Everything You Need<br />to Read Better
+        </h2>
+        <p class="section__desc">
+          Purpose-built tools that make reading more enjoyable, wherever you are.
+        </p>
+      </div>
+
+      <div class="features-grid" data-fade="children">
+
+        <!-- Feature 1 -->
+        <article class="feature-card" aria-label="Cloud Reading feature">
+          <div class="feature-card__num" aria-hidden="true">01</div>
+          <div class="feature-card__icon" aria-hidden="true">☁️</div>
+          <h3 class="feature-card__title">Cloud Reading</h3>
+          <p class="feature-card__desc">
+            Your library lives in the cloud. Start a novel on your phone during your
+            commute and pick up exactly where you left off on your laptop at home —
+            seamlessly, every time.
+          </p>
+        </article>
+
+        <!-- Feature 2 -->
+        <article class="feature-card" aria-label="Bookmark Pages feature">
+          <div class="feature-card__num" aria-hidden="true">02</div>
+          <div class="feature-card__icon" aria-hidden="true">🔖</div>
+          <h3 class="feature-card__title">Bookmark Pages</h3>
+          <p class="feature-card__desc">
+            Never lose your place. Bookmark individual pages, chapters, or passages
+            across any device. Your bookmarks sync instantly and stay with you forever.
+          </p>
+        </article>
+
+        <!-- Feature 3 -->
+        <article class="feature-card" aria-label="Dark Mode Reader feature">
+          <div class="feature-card__num" aria-hidden="true">03</div>
+          <div class="feature-card__icon" aria-hidden="true">🌙</div>
+          <h3 class="feature-card__title">Dark Mode Reader</h3>
+          <p class="feature-card__desc">
+            Protect your eyes during late-night reading sessions. Switch between Dark,
+            Sepia, and Light themes instantly. Adjust font size to your exact comfort level.
+          </p>
+        </article>
+
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       CTA BANNER
+  ══════════════════════════════════════════════════════════ -->
+  <section class="cta-section" aria-label="Call to action">
+    <div class="container">
+      <div class="cta-inner" data-fade>
+        <h2 class="cta-inner__title">Start Reading Today.<br />It's Free.</h2>
+        <p class="cta-inner__desc">
+          Join over 320,000 readers on CloudNovel. No credit card required —
+          just create your account and dive in.
+        </p>
+        <div class="cta-inner__actions">
+          <a href="library.html" class="btn btn--primary btn--lg">Browse the Library</a>
+          <a href="login.html"   class="btn btn--outline  btn--lg">Create Free Account</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- ══════════════════════════════════════════════════════════
+       FOOTER
+  ══════════════════════════════════════════════════════════ -->
+  <footer class="footer" id="about" aria-label="Site footer">
+    <div class="footer__inner">
+
+      <!-- Brand -->
+      <div class="footer__brand">
+        <div class="footer__logo">
+          <div class="footer__logo-icon" aria-hidden="true">📖</div>
+          Cloud<span style="color:var(--accent-light)">Novel</span>
+        </div>
+        <p class="footer__tagline">
+          A cloud-based reading platform built for readers who love stories —
+          accessible anywhere, on any device.
+        </p>
+        <div class="footer__socials" aria-label="Social media links">
+          <a href="#" class="footer__social" aria-label="Twitter">𝕏</a>
+          <a href="#" class="footer__social" aria-label="GitHub">⌥</a>
+          <a href="#" class="footer__social" aria-label="Discord">◈</a>
+          <a href="#" class="footer__social" aria-label="RSS">◉</a>
+        </div>
+      </div>
+
+      <!-- Links: Navigate -->
+      <nav aria-label="Navigate">
+        <p class="footer__col-title">Navigate</p>
+        <ul class="footer__col-links">
+          <li><a href="index.html">Home</a></li>
+          <li><a href="library.html">Library</a></li>
+          <li><a href="#features">Features</a></li>
+          <li><a href="login.html">Login</a></li>
+        </ul>
+      </nav>
+
+      <!-- Links: About -->
+      <nav aria-label="About">
+        <p class="footer__col-title">About</p>
+        <ul class="footer__col-links">
+          <li><a href="#">Our Story</a></li>
+          <li><a href="#">Blog</a></li>
+          <li><a href="#">Careers</a></li>
+          <li><a href="#">Press</a></li>
+        </ul>
+      </nav>
+
+      <!-- Links: Contact -->
+      <nav aria-label="Contact">
+        <p class="footer__col-title">Contact</p>
+        <ul class="footer__col-links">
+          <li><a href="mailto:workforkaran@gmail.com">workforkaran@gmail.com</a></li>
+          <li><a href="#">Help Center</a></li>
+          <li><a href="#">Community</a></li>
+          <li><a href="#">Status</a></li>
+        </ul>
+      </nav>
+
+    </div><!-- /.footer__inner -->
+
+    <div class="footer__bottom">
+      <p class="footer__copy">© 2026 CloudNovel. All rights reserved.</p>
+      <nav class="footer__legal" aria-label="Legal">
+        <a href="#">Privacy Policy</a>
+        <a href="#">Terms of Service</a>
+        <a href="#">Cookie Policy</a>
+      </nav>
+    </div>
+  </footer>
+
+
+  <!-- Project JS -->
+  <script src="js/main.js"></script>
+
+  <script>
+    /* ── Inline bootstrap: scroll reveal + navbar shadow ─────── */
+    (function () {
+      'use strict';
+
+      /* Navbar scroll shadow */
+      const navbar = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+        navbar?.classList.toggle('scrolled', window.scrollY > 8);
+      }, { passive: true });
+
+      /* Mobile hamburger */
+      const hamburger = document.getElementById('navbar-hamburger');
+      const links     = document.getElementById('navbar-links');
+      let open = false;
+
+      if (hamburger && links) {
+        hamburger.addEventListener('click', () => {
+          open = !open;
+          links.classList.toggle('open', open);
+          hamburger.setAttribute('aria-expanded', open);
+          const spans = hamburger.querySelectorAll('span');
+          if (open) {
+            spans[0].style.transform = 'translateY(7px) rotate(45deg)';
+            spans[1].style.opacity   = '0';
+            spans[2].style.transform = 'translateY(-7px) rotate(-45deg)';
+          } else {
+            spans.forEach(s => { s.style.transform = ''; s.style.opacity = ''; });
+          }
+        });
+
+        document.addEventListener('click', (e) => {
+          if (!open) return;
+          if (!navbar?.contains(e.target)) {
+            open = false;
+            links.classList.remove('open');
+            hamburger.setAttribute('aria-expanded', false);
+            hamburger.querySelectorAll('span').forEach(s => { s.style.transform=''; s.style.opacity=''; });
+          }
+        });
+      }
+
+      /* Scroll fade-in via IntersectionObserver */
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting) return;
+          const el = entry.target;
+          const parent = el.parentElement;
+          if (parent?.dataset?.fade === 'children') {
+            const idx = [...parent.children].indexOf(el);
+            el.style.transitionDelay = `${idx * 75}ms`;
+          }
+          el.classList.add('is-visible');
+          observer.unobserve(el);
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+      document.querySelectorAll('[data-fade]:not([data-fade="children"])').forEach(el => observer.observe(el));
+      document.querySelectorAll('[data-fade="children"] > *').forEach(el => observer.observe(el));
+
+      /* Smooth scroll for anchor links */
+      document.addEventListener('click', e => {
+        const a = e.target.closest('a[href^="#"]');
+        if (!a) return;
+        const target = document.querySelector(a.getAttribute('href'));
+        if (!target) return;
+        e.preventDefault();
+        const offset = (navbar?.offsetHeight ?? 68) + 12;
+        window.scrollTo({ top: target.offsetTop - offset, behavior: 'smooth' });
+      });
+    })();
+  </script>
+
+</body>
+</html>
+
+

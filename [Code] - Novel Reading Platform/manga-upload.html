@@ -1,0 +1,1061 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Upload Manga — CloudNovel</title>
+  <link rel="stylesheet" href="manga.css" />
+  <style>
+    /* ── Upload page ────────────────────────────────────────── */
+    body { padding-top: var(--navbar-h); }
+
+    /* ── Header ─────────────────────────────────────────────── */
+    .upload-hero {
+      text-align: center;
+      padding: 3.5rem 1.5rem 0;
+      animation: fade-up 0.65s 0.05s var(--ease) both;
+    }
+
+    .upload-hero__title {
+      font-family: var(--font-display);
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 900;
+      letter-spacing: -0.035em;
+      line-height: 1.08;
+      margin-bottom: 0.7rem;
+    }
+
+    .upload-hero__title em {
+      font-style: normal;
+      background: var(--gradient-hero);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .upload-hero__sub {
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      max-width: 440px;
+      margin: 0 auto;
+      font-weight: 300;
+      line-height: 1.75;
+    }
+
+    /* ── Upload layout ──────────────────────────────────────── */
+    .upload-layout {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 5rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .upload-card {
+      background: rgba(13, 21, 37, 0.65);
+      backdrop-filter: blur(24px) saturate(1.5);
+      -webkit-backdrop-filter: blur(24px) saturate(1.5);
+      border: 1px solid rgba(99,102,241,0.18);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      box-shadow:
+        0 32px 80px rgba(0,0,0,0.4),
+        inset 0 1px 0 rgba(255,255,255,0.06);
+      animation: fade-up 0.65s 0.15s var(--ease) both;
+      grid-column: 1 / -1;
+    }
+
+    .upload-card__header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.75rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .upload-card__header-icon {
+      width: 44px; height: 44px;
+      background: var(--accent-dim);
+      border: 1px solid var(--border-accent);
+      border-radius: var(--radius);
+      display: grid;
+      place-items: center;
+      font-size: 1.3rem;
+    }
+
+    .upload-card__header-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .upload-card__header-sub {
+      font-size: 0.75rem;
+      color: var(--text-faint);
+      margin-top: 0.1rem;
+    }
+
+    /* Form grid inside card */
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+    }
+
+    .form-grid .full { grid-column: 1 / -1; }
+
+    /* ── Cover Drop Zone ────────────────────────────────────── */
+    .cover-drop-zone {
+      position: relative;
+      border: 2px dashed rgba(99,102,241,0.25);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+      overflow: hidden;
+      min-height: 180px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      background: rgba(15,23,42,0.5);
+    }
+
+    .cover-drop-zone:hover,
+    .cover-drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(99,102,241,0.07);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12), inset 0 0 40px rgba(99,102,241,0.05);
+    }
+
+    .cover-drop-zone.has-file {
+      border-color: #10b981;
+      background: rgba(16,185,129,0.06);
+    }
+
+    .cover-drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    .drop-icon {
+      font-size: 2.2rem;
+      transition: transform 0.3s var(--spring);
+      pointer-events: none;
+    }
+
+    .cover-drop-zone:hover .drop-icon { transform: translateY(-5px) scale(1.1); }
+
+    .drop-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      pointer-events: none;
+    }
+
+    .drop-sub {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .drop-sub span { color: #818cf8; font-weight: 600; }
+
+    /* Cover preview */
+    .cover-preview-wrap {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .cover-preview-wrap.visible { display: flex; }
+
+    .cover-preview-img {
+      width: 100px; height: 140px;
+      object-fit: cover;
+      border-radius: 10px;
+      border: 2px solid var(--border-accent);
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    .cover-preview-label {
+      font-size: 0.68rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Image multi-drop zone ──────────────────────────────── */
+    .pages-drop-zone {
+      position: relative;
+      border: 2px dashed rgba(99,102,241,0.25);
+      border-radius: var(--radius-lg);
+      padding: 2.5rem 1.5rem;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(15,23,42,0.5);
+      transition: all 0.25s;
+      min-height: 160px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .pages-drop-zone:hover,
+    .pages-drop-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(99,102,241,0.07);
+      box-shadow: 0 0 0 3px rgba(99,102,241,0.12);
+    }
+
+    .pages-drop-zone input[type="file"] {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Image preview grid */
+    .page-previews {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 0.6rem;
+      margin-top: 1.25rem;
+    }
+
+    .page-preview-item {
+      position: relative;
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+      aspect-ratio: 3/4;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+    }
+
+    .page-preview-item img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .page-preview-item__num {
+      position: absolute;
+      bottom: 3px; right: 4px;
+      background: rgba(0,0,0,0.7);
+      color: var(--text-faint);
+      font-size: 0.55rem;
+      font-weight: 700;
+      padding: 0.1rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    .page-preview-item__remove {
+      position: absolute;
+      top: 3px; right: 3px;
+      width: 18px; height: 18px;
+      background: rgba(248,113,113,0.85);
+      border: none;
+      border-radius: 50%;
+      color: #fff;
+      font-size: 0.65rem;
+      display: none;
+      place-items: center;
+      cursor: pointer;
+    }
+
+    .page-preview-item:hover .page-preview-item__remove { display: grid; }
+
+    /* Pages count badge */
+    .pages-count-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(16,185,129,0.12);
+      border: 1px solid rgba(16,185,129,0.25);
+      border-radius: var(--radius-pill);
+      padding: 0.3rem 0.85rem;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: #6ee7b7;
+      margin-top: 0.75rem;
+    }
+
+    /* ── Upload progress ────────────────────────────────────── */
+    .upload-progress {
+      display: none;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 0.75rem;
+    }
+
+    .upload-progress.visible { display: flex; }
+
+    .upload-progress__row {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .upload-progress__track {
+      height: 5px;
+      background: var(--border);
+      border-radius: var(--radius-pill);
+      overflow: hidden;
+    }
+
+    .upload-progress__fill {
+      height: 100%;
+      background: var(--gradient-hero);
+      border-radius: var(--radius-pill);
+      width: 0%;
+      transition: width 0.12s linear;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* ── Submit button ──────────────────────────────────────── */
+    .btn-upload {
+      width: 100%;
+      padding: 1rem;
+      background: var(--gradient-hero);
+      border: none;
+      border-radius: var(--radius);
+      color: #fff;
+      font-family: var(--font-body);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      letter-spacing: 0.02em;
+      box-shadow: 0 4px 24px var(--accent-glow);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: transform 0.2s var(--ease), box-shadow 0.2s var(--ease), opacity 0.2s;
+    }
+
+    .btn-upload:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 40px var(--accent-glow);
+    }
+
+    .btn-upload:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    .btn-upload .spinner {
+      display: none;
+      width: 18px; height: 18px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+    }
+
+    .btn-upload.loading .btn-label { display: none; }
+    .btn-upload.loading .spinner   { display: block; }
+
+    /* ── Success ────────────────────────────────────────────── */
+    .success-panel {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1rem;
+      padding: 2rem 1rem;
+    }
+
+    .success-panel.visible { display: flex; }
+
+    .success-ring {
+      width: 80px; height: 80px;
+      border-radius: 50%;
+      background: rgba(16,185,129,0.1);
+      border: 2px solid rgba(16,185,129,0.4);
+      display: grid;
+      place-items: center;
+      font-size: 2.2rem;
+      animation: pop-in 0.5s cubic-bezier(0.34,1.56,0.64,1) both,
+                 glow-pulse 2s ease-in-out 0.5s 2;
+      box-shadow: 0 0 30px rgba(16,185,129,0.3);
+    }
+
+    @keyframes pop-in {
+      from { opacity:0; transform:scale(0.5); }
+      to   { opacity:1; transform:scale(1); }
+    }
+
+    .success-title { font-size: 1.4rem; font-weight: 800; color: #6ee7b7; }
+    .success-sub   { font-size: 0.875rem; color: var(--text-muted); max-width: 320px; }
+    .success-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
+
+    /* ── Uploaded list ──────────────────────────────────────── */
+    .my-uploads {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 1.5rem 5rem;
+      animation: fade-up 0.6s 0.3s var(--ease) both;
+    }
+
+    .my-uploads__header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .my-uploads__title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .my-uploads__title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    .uploads-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(175px, 1fr));
+      gap: 1.25rem;
+    }
+
+    .upload-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      background: rgba(17,24,39,0.6);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      padding: 0.85rem;
+      transition: transform 0.3s var(--spring), box-shadow 0.3s, border-color 0.3s;
+      animation: scale-in 0.4s var(--ease) both;
+    }
+
+    .upload-item:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-accent);
+    }
+
+    .upload-item__cover {
+      aspect-ratio: 3/4;
+      border-radius: var(--radius);
+      overflow: hidden;
+      background: var(--bg-2);
+      display: grid;
+      place-items: center;
+      font-size: 2rem;
+      color: var(--text-faint);
+    }
+
+    .upload-item__cover img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    .upload-item__title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .upload-item__meta {
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .upload-item__actions {
+      display: flex;
+      gap: 0.4rem;
+    }
+
+    .item-action-btn {
+      flex: 1;
+      padding: 0.38rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      background: rgba(17,24,39,0.6);
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-weight: 600;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+    }
+
+    .item-action-btn:hover { border-color: var(--border-accent); background: var(--accent-dim); color: var(--text); }
+    .item-action-btn--del:hover { border-color: #f87171; background: rgba(248,113,113,0.1); color: #f87171; }
+
+    .empty-uploads {
+      display: none;
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-faint);
+    }
+
+    .empty-uploads.visible { display: block; }
+    .empty-uploads__icon { font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.35; }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 640px) {
+      .upload-layout { grid-template-columns: 1fr; padding: 1.5rem 1rem 4rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-grid .full { grid-column: 1; }
+      .my-uploads { padding: 0 1rem 4rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Background -->
+  <div class="bg-mesh" aria-hidden="true"><div class="bg-mesh-orb"></div></div>
+
+  <!-- Toast -->
+  <div class="manga-toast" id="manga-toast" role="status" aria-live="polite"></div>
+
+  <!-- Navbar -->
+  <nav class="manga-nav" id="manga-nav">
+    <a href="index.html" class="nav-logo">
+      <div class="nav-logo__icon">漫</div>
+      Cloud<em>Manga</em>
+    </a>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="manga-library.html">Library</a></li>
+      <li><a href="manga-upload.html" class="active">Upload</a></li>
+      <li><a href="library.html">Novels</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="manga-library.html" class="btn btn--ghost btn--sm">Browse Library</a>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Toggle menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main>
+
+    <!-- Hero -->
+    <div class="upload-hero">
+      <p class="section-eyebrow" style="justify-content:center">Creator Studio</p>
+      <h1 class="upload-hero__title">Upload Your <em>Manga</em></h1>
+      <p class="upload-hero__sub">
+        Share your chapters with readers on CloudNovel. Drag, drop, publish.
+      </p>
+    </div>
+
+    <!-- Upload form -->
+    <div class="upload-layout">
+      <div class="upload-card" id="upload-card">
+
+        <!-- Card header -->
+        <div class="upload-card__header">
+          <div class="upload-card__header-icon">📤</div>
+          <div>
+            <div class="upload-card__header-title">New Chapter Upload</div>
+            <div class="upload-card__header-sub">Fill in the details and add your pages</div>
+          </div>
+        </div>
+
+        <!-- Form -->
+        <form id="upload-form" novalidate>
+          <div class="form-grid">
+
+            <!-- Title -->
+            <div class="field">
+              <label for="manga-title">Manga Title *</label>
+              <input type="text" id="manga-title" placeholder="e.g. Solo Leveling" maxlength="80" required autocomplete="off" />
+              <div class="field-error" id="title-error">Please enter a title.</div>
+            </div>
+
+            <!-- Author -->
+            <div class="field">
+              <label for="manga-author">Author Name</label>
+              <input type="text" id="manga-author" placeholder="e.g. Chugong" maxlength="60" autocomplete="off" />
+            </div>
+
+            <!-- Genre -->
+            <div class="field">
+              <label for="manga-genre">Genre *</label>
+              <select id="manga-genre" required>
+                <option value="action">⚡ Action</option>
+                <option value="fantasy">🔮 Fantasy</option>
+                <option value="romance">🌹 Romance</option>
+                <option value="sci-fi">🚀 Sci-Fi</option>
+                <option value="isekai">🌀 Isekai</option>
+                <option value="horror">👻 Horror</option>
+                <option value="adventure">🗺️ Adventure</option>
+                <option value="slice">☕ Slice of Life</option>
+              </select>
+            </div>
+
+            <!-- Chapter number -->
+            <div class="field">
+              <label for="manga-chapter">Chapter Number *</label>
+              <input type="number" id="manga-chapter" placeholder="e.g. 1" min="1" max="9999" required />
+              <div class="field-error" id="chapter-error">Enter a valid chapter number.</div>
+            </div>
+
+            <!-- Chapter title -->
+            <div class="field full">
+              <label for="manga-chapter-title">Chapter Title</label>
+              <input type="text" id="manga-chapter-title" placeholder="e.g. Arise" maxlength="80" autocomplete="off" />
+            </div>
+
+            <!-- Cover image -->
+            <div class="field full" id="field-cover">
+              <label>Cover Image <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.65rem;color:var(--text-faint)">(optional)</span></label>
+              <div class="cover-drop-zone" id="cover-drop" role="button" tabindex="0" aria-label="Upload cover image">
+                <input type="file" id="cover-input" accept="image/*" aria-hidden="true" tabindex="-1" />
+                <div class="drop-icon" id="cover-icon">🖼️</div>
+                <div class="drop-title" id="cover-title">Drop cover image here</div>
+                <div class="drop-sub">or <span>click to browse</span> — JPG, PNG, WEBP</div>
+              </div>
+              <div class="cover-preview-wrap" id="cover-preview-wrap">
+                <img class="cover-preview-img" id="cover-preview" src="" alt="Cover preview" />
+                <div class="cover-preview-label">Cover Preview</div>
+              </div>
+            </div>
+
+            <!-- Chapter pages -->
+            <div class="field full" id="field-pages">
+              <label>Chapter Pages * <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.65rem;color:var(--text-faint)">(images in order)</span></label>
+              <div class="pages-drop-zone" id="pages-drop" role="button" tabindex="0" aria-label="Upload manga pages">
+                <input type="file" id="pages-input" accept="image/*" multiple aria-hidden="true" tabindex="-1" />
+                <div class="drop-icon" id="pages-icon">📄</div>
+                <div class="drop-title" id="pages-title">Drop manga pages here</div>
+                <div class="drop-sub">or <span>click to browse</span> — JPG, PNG (multiple files)</div>
+              </div>
+              <div class="pages-count-badge" id="pages-count-badge" style="display:none">
+                <span>✓</span>
+                <span id="pages-count-label">0 pages selected</span>
+              </div>
+              <div class="page-previews" id="page-previews"></div>
+              <div class="field-error" id="pages-error">Please add at least 1 page.</div>
+            </div>
+
+            <!-- Progress -->
+            <div class="field full">
+              <div class="upload-progress" id="upload-progress">
+                <div class="upload-progress__row">
+                  <span id="progress-label">Saving…</span>
+                  <span id="progress-pct">0%</span>
+                </div>
+                <div class="upload-progress__track">
+                  <div class="upload-progress__fill" id="progress-fill"></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="field full">
+              <button type="submit" class="btn-upload" id="btn-upload">
+                <span class="btn-label">✦ Publish Chapter</span>
+                <div class="spinner"></div>
+              </button>
+            </div>
+
+          </div><!-- /.form-grid -->
+        </form>
+
+        <!-- Success -->
+        <div class="success-panel" id="success-panel">
+          <div class="success-ring">✓</div>
+          <div class="success-title">Chapter Published!</div>
+          <p class="success-sub" id="success-msg">Your manga is now live in the CloudNovel library.</p>
+          <div class="success-actions">
+            <button class="btn btn--ghost" id="btn-add-another">+ Add Another Chapter</button>
+            <a href="manga-library.html" class="btn btn--primary">Browse Library →</a>
+          </div>
+        </div>
+
+      </div><!-- /.upload-card -->
+    </div><!-- /.upload-layout -->
+
+    <!-- My uploads -->
+    <div class="my-uploads" id="my-uploads">
+      <div class="my-uploads__header">
+        <div class="my-uploads__title">Your Uploads</div>
+        <button class="btn btn--ghost btn--sm" id="btn-clear-all" style="display:none">Clear All</button>
+      </div>
+      <div class="uploads-grid" id="uploads-grid"></div>
+      <div class="empty-uploads visible" id="empty-uploads">
+        <div class="empty-uploads__icon">📭</div>
+        <p style="font-size:0.85rem">No manga uploaded yet.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="manga.js"></script>
+  <script>
+    'use strict';
+
+    /* ── State ─────────────────────────────────────────────── */
+    let coverDataURL = null;
+    let pageFiles    = [];   // { file, dataURL }
+
+    /* ── DOM ───────────────────────────────────────────────── */
+    const $ = id => document.getElementById(id);
+    const form          = $('upload-form');
+    const btnUpload     = $('btn-upload');
+    const successPanel  = $('success-panel');
+    const btnAddAnother = $('btn-add-another');
+    const coverDrop     = $('cover-drop');
+    const coverInput    = $('cover-input');
+    const coverPreviewW = $('cover-preview-wrap');
+    const coverPreview  = $('cover-preview');
+    const pagesDrop     = $('pages-drop');
+    const pagesInput    = $('pages-input');
+    const pagePreviews  = $('page-previews');
+    const countBadge    = $('pages-count-badge');
+    const countLabel    = $('pages-count-label');
+    const progressWrap  = $('upload-progress');
+    const progressFill  = $('progress-fill');
+    const progressPct   = $('progress-pct');
+    const progressLabel = $('progress-label');
+    const uploadGrid    = $('uploads-grid');
+    const emptyUploads  = $('empty-uploads');
+    const btnClearAll   = $('btn-clear-all');
+
+    /* ── Cover handling ─────────────────────────────────────── */
+    function handleCover(file) {
+      if (!file?.type.startsWith('image/')) { showToast('Please upload an image file.', 'error'); return; }
+      const r = new FileReader();
+      r.onload = e => {
+        coverDataURL = e.target.result;
+        coverPreview.src = coverDataURL;
+        coverPreviewW.classList.add('visible');
+        coverDrop.classList.add('has-file');
+        $('cover-icon').textContent  = '✅';
+        $('cover-title').textContent = 'Cover ready';
+      };
+      r.readAsDataURL(file);
+    }
+
+    coverInput.addEventListener('change', () => handleCover(coverInput.files[0]));
+    ['dragenter','dragover'].forEach(e => coverDrop.addEventListener(e, ev => { ev.preventDefault(); coverDrop.classList.add('drag-over'); }));
+    ['dragleave','drop'].forEach(e => coverDrop.addEventListener(e, ev => {
+      ev.preventDefault(); coverDrop.classList.remove('drag-over');
+      if (e === 'drop') handleCover(ev.dataTransfer.files[0]);
+    }));
+    coverDrop.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') coverInput.click(); });
+
+    /* ── Pages handling ─────────────────────────────────────── */
+    async function handlePages(files) {
+      const imgs = [...files].filter(f => f.type.startsWith('image/'));
+      if (!imgs.length) { showToast('Please add image files only.', 'error'); return; }
+
+      for (const file of imgs) {
+        const dataURL = await readFile(file);
+        pageFiles.push({ file, dataURL });
+      }
+
+      renderPagePreviews();
+      $('field-pages').classList.remove('has-error');
+    }
+
+    function readFile(file) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload  = e => res(e.target.result);
+        r.onerror = () => rej();
+        r.readAsDataURL(file);
+      });
+    }
+
+    function renderPagePreviews() {
+      pagePreviews.innerHTML = '';
+      pageFiles.forEach((p, i) => {
+        const div = document.createElement('div');
+        div.className = 'page-preview-item';
+
+        const img = document.createElement('img');
+        img.src = p.dataURL;
+        img.alt = `Page ${i+1}`;
+
+        const num = document.createElement('div');
+        num.className = 'page-preview-item__num';
+        num.textContent = i+1;
+
+        const rmv = document.createElement('button');
+        rmv.className = 'page-preview-item__remove';
+        rmv.type = 'button';
+        rmv.textContent = '✕';
+        rmv.addEventListener('click', () => { pageFiles.splice(i, 1); renderPagePreviews(); });
+
+        div.appendChild(img); div.appendChild(num); div.appendChild(rmv);
+        pagePreviews.appendChild(div);
+      });
+
+      const count = pageFiles.length;
+      countBadge.style.display = count ? 'inline-flex' : 'none';
+      countLabel.textContent   = `${count} page${count !== 1 ? 's' : ''} selected`;
+
+      if (count > 0) {
+        pagesDrop.classList.add('has-file');
+        $('pages-icon').textContent  = '✅';
+        $('pages-title').textContent = `${count} page${count !== 1 ? 's' : ''} ready`;
+      } else {
+        pagesDrop.classList.remove('has-file');
+        $('pages-icon').textContent  = '📄';
+        $('pages-title').textContent = 'Drop manga pages here';
+      }
+    }
+
+    pagesInput.addEventListener('change', () => handlePages(pagesInput.files));
+    ['dragenter','dragover'].forEach(e => pagesDrop.addEventListener(e, ev => { ev.preventDefault(); pagesDrop.classList.add('drag-over'); }));
+    ['dragleave','drop'].forEach(e => pagesDrop.addEventListener(e, ev => {
+      ev.preventDefault(); pagesDrop.classList.remove('drag-over');
+      if (e === 'drop') handlePages(ev.dataTransfer.files);
+    }));
+    pagesDrop.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') pagesInput.click(); });
+
+    /* ── Validate ───────────────────────────────────────────── */
+    function validate() {
+      let ok = true;
+      const title = $('manga-title').value.trim();
+      const chNum = parseInt($('manga-chapter').value, 10);
+
+      if (!title) { $('field-title')?.classList.add('has-error'); $('title-error').style.display='block'; ok=false; }
+      if (!chNum || chNum < 1) { $('field-pages')?.querySelector('.field-error'); $('chapter-error').style.display='block'; ok=false; }
+      if (!pageFiles.length) { $('field-pages').classList.add('has-error'); $('pages-error').style.display='block'; ok=false; }
+
+      return ok;
+    }
+
+    $('manga-title').addEventListener('input', () => { $('title-error').style.display='none'; });
+    $('manga-chapter').addEventListener('input', () => { $('chapter-error').style.display='none'; });
+
+    /* ── Progress simulation ────────────────────────────────── */
+    function simulateProgress() {
+      return new Promise(resolve => {
+        progressWrap.classList.add('visible');
+        let pct = 0;
+        const stages = [
+          {target:25, label:'Reading images…', delay:60},
+          {target:60, label:'Compressing…',    delay:45},
+          {target:85, label:'Saving to library…', delay:40},
+          {target:100, label:'Complete!',      delay:30},
+        ];
+        let si = 0;
+        function tick() {
+          if (!stages[si]) { resolve(); return; }
+          if (pct < stages[si].target) {
+            pct = Math.min(pct+2, stages[si].target);
+            progressFill.style.width = pct+'%';
+            progressPct.textContent  = pct+'%';
+            progressLabel.textContent = stages[si].label;
+            setTimeout(tick, stages[si].delay);
+          } else { si++; setTimeout(tick, 100); }
+        }
+        tick();
+      });
+    }
+
+    /* ── Submit ─────────────────────────────────────────────── */
+    form.addEventListener('submit', async e => {
+      e.preventDefault();
+      if (!validate()) { showToast('Please fill in all required fields.', 'error'); return; }
+
+      btnUpload.classList.add('loading');
+      btnUpload.disabled = true;
+
+      await simulateProgress();
+
+      const mangaId    = generateMangaId($('manga-title').value.trim());
+      const chNum      = parseInt($('manga-chapter').value, 10);
+      const chTitle    = $('manga-chapter-title').value.trim() || `Chapter ${chNum}`;
+
+      const manga = {
+        id:        mangaId,
+        title:     $('manga-title').value.trim(),
+        author:    $('manga-author').value.trim() || 'Unknown Author',
+        genre:     $('manga-genre').value,
+        rating:    0,
+        chapters:  1,
+        status:    'Ongoing',
+        cover:     coverDataURL,
+        coverFallback: 'linear-gradient(145deg,#1e293b,#0f172a)',
+        isSeeded:  false,
+        isUserUpload: true,
+        uploadedAt: new Date().toISOString(),
+        chapterList: [{ num: chNum, title: chTitle }],
+        chapterImages: [{
+          num:    chNum,
+          title:  chTitle,
+          images: pageFiles.map(p => p.dataURL)
+        }]
+      };
+
+      /* Check if manga title already exists — add chapter to it */
+      const existing = getUserManga().find(m => m.title.toLowerCase() === manga.title.toLowerCase());
+      if (existing) {
+        /* Add chapter to existing */
+        if (!existing.chapterList.find(c => c.num === chNum)) {
+          existing.chapterList.push({ num: chNum, title: chTitle });
+          existing.chapterList.sort((a,b) => a.num - b.num);
+          existing.chapters = existing.chapterList.length;
+        }
+        if (!existing.chapterImages) existing.chapterImages = [];
+        const ci = existing.chapterImages.findIndex(c => c.num === chNum);
+        if (ci >= 0) existing.chapterImages[ci] = { num: chNum, title: chTitle, images: pageFiles.map(p => p.dataURL) };
+        else existing.chapterImages.push({ num: chNum, title: chTitle, images: pageFiles.map(p => p.dataURL) });
+        if (!existing.cover && coverDataURL) existing.cover = coverDataURL;
+
+        const list = getUserManga().map(m => m.id === existing.id ? existing : m);
+        saveUserManga(list);
+      } else {
+        addUserManga(manga);
+      }
+
+      btnUpload.classList.remove('loading');
+      btnUpload.disabled = false;
+      progressWrap.classList.remove('visible');
+
+      form.style.display = 'none';
+      $('success-msg').textContent = `"${manga.title}" Ch.${chNum} is now live in the CloudNovel Manga Library!`;
+      successPanel.classList.add('visible');
+      showToast(`✅ Chapter published successfully!`, 'success', 4000);
+      renderMyUploads();
+    });
+
+    /* ── Reset ──────────────────────────────────────────────── */
+    btnAddAnother.addEventListener('click', () => {
+      form.reset();
+      coverDataURL = null; pageFiles = [];
+      coverPreviewW.classList.remove('visible');
+      coverDrop.classList.remove('has-file');
+      pagesDrop.classList.remove('has-file');
+      pagePreviews.innerHTML = '';
+      countBadge.style.display = 'none';
+      $('cover-icon').textContent  = '🖼️'; $('cover-title').textContent = 'Drop cover image here';
+      $('pages-icon').textContent  = '📄'; $('pages-title').textContent = 'Drop manga pages here';
+      progressWrap.classList.remove('visible');
+      successPanel.classList.remove('visible');
+      form.style.display = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    /* ── Render user uploads ────────────────────────────────── */
+    function renderMyUploads() {
+      const list = getUserManga();
+      uploadGrid.innerHTML = '';
+
+      if (!list.length) {
+        emptyUploads.classList.add('visible');
+        btnClearAll.style.display = 'none';
+        return;
+      }
+
+      emptyUploads.classList.remove('visible');
+      btnClearAll.style.display = '';
+
+      list.forEach((manga, i) => {
+        const div = document.createElement('div');
+        div.className = 'upload-item';
+        div.style.animationDelay = `${i * 0.05}s`;
+
+        div.innerHTML = `
+          <div class="upload-item__cover">
+            ${manga.cover
+              ? `<img src="${manga.cover}" alt="${escapeHTML(manga.title)}" loading="lazy" />`
+              : `漫`}
+          </div>
+          <div class="upload-item__title">${escapeHTML(manga.title)}</div>
+          <div class="upload-item__meta">
+            <span>${manga.chapters} ch</span>
+            <span>${manga.genre}</span>
+          </div>
+          <div class="upload-item__actions">
+            <button class="item-action-btn" data-read="${manga.id}">▶ Read</button>
+            <button class="item-action-btn item-action-btn--del" data-del="${manga.id}">🗑</button>
+          </div>
+        `;
+
+        div.querySelector('[data-read]').addEventListener('click', () => {
+          window.location.href = `manga-reader.html?id=${manga.id}`;
+        });
+        div.querySelector('[data-del]').addEventListener('click', () => {
+          deleteUserManga(manga.id);
+          showToast(`"${manga.title}" removed.`, '', 2500);
+          renderMyUploads();
+        });
+
+        uploadGrid.appendChild(div);
+      });
+    }
+
+<div>
+  <input type="file" id="files" multiple />
+  <button id="uploadBtn">
+    Upload Manga
+  </button>
+</div>
+
+import { storage } from "./firebase.js";
+
+import { ref, uploadBytes }
+from "https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js";
+
+const uploadBtn = document.getElementById("uploadBtn");
+
+uploadBtn.addEventListener("click", async () => {
+
+const files = document.getElementById("files").files;
+
+for (let file of files) {
+
+const storageRef = ref(storage, "manga/" + file.name);
+
+await uploadBytes(storageRef, file);
+
+}
+
+alert("Upload complete");
+
+});
+
+    btnClearAll.addEventListener('click', () => {
+      if (!confirm('Delete all your uploaded manga?')) return;
+      saveUserManga([]);
+      showToast('All uploads cleared.', '', 2500);
+      renderMyUploads();
+    });
+
+    /* ── Init ───────────────────────────────────────────────── */
+    renderMyUploads();
+  </script>
+
+  <script type="module" src="firebase.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Manga Reader — CloudNovel</title>
+  <link rel="stylesheet" href="manga.css" />
+  <style>
+    /* ── Reader-specific layout ─────────────────────────────── */
+    :root { --reader-max: 900px; }
+
+    body {
+      background: #050810;
+      overflow-x: hidden;
+    }
+
+    /* ── READER TOOLBAR ─────────────────────────────────────── */
+    .reader-toolbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--navbar-h);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0 1.5rem;
+      z-index: 200;
+      background: rgba(5, 8, 16, 0.85);
+      backdrop-filter: blur(24px) saturate(1.5);
+      border-bottom: 1px solid rgba(99,102,241,0.12);
+      transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+    }
+
+    .reader-toolbar.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(-8px);
+    }
+
+    .reader-toolbar__left,
+    .reader-toolbar__right {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      flex: 1;
+    }
+
+    .reader-toolbar__right { justify-content: flex-end; }
+
+    .reader-toolbar__center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex-shrink: 0;
+      text-align: center;
+    }
+
+    .reader-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 260px;
+    }
+
+    .reader-chapter-label {
+      font-size: 0.65rem;
+      color: var(--text-faint);
+    }
+
+    /* Icon toolbar buttons */
+    .reader-btn {
+      width: 36px; height: 36px;
+      display: grid;
+      place-items: center;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(17,24,39,0.7);
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1rem;
+      transition: color 0.2s, background 0.2s, border-color 0.2s,
+                  box-shadow 0.2s, transform 0.15s;
+      backdrop-filter: blur(8px);
+      text-decoration: none;
+      font-family: var(--font-body);
+    }
+
+    .reader-btn:hover {
+      color: var(--text);
+      background: var(--accent-dim);
+      border-color: var(--border-accent);
+      box-shadow: 0 0 12px var(--accent-glow);
+      transform: translateY(-1px);
+    }
+
+    .reader-btn.active {
+      color: #818cf8;
+      background: var(--accent-dim);
+      border-color: var(--border-accent);
+    }
+
+    /* Chapter selector */
+    .chapter-select {
+      padding: 0.42rem 2rem 0.42rem 0.85rem;
+      background: rgba(17,24,39,0.8);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 500;
+      outline: none;
+      cursor: pointer;
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 24 24' fill='none' stroke='%236366f1' stroke-width='2.5'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 0.7rem center;
+      backdrop-filter: blur(8px);
+      transition: border-color 0.2s;
+      max-width: 180px;
+    }
+
+    .chapter-select:focus { border-color: var(--accent); }
+    .chapter-select option { background: #0d1525; color: var(--text); }
+
+    /* ── Progress bar ───────────────────────────────────────── */
+    .reading-progress-bar {
+      position: fixed;
+      top: var(--navbar-h); left: 0; right: 0;
+      height: 3px;
+      background: rgba(255,255,255,0.05);
+      z-index: 150;
+    }
+
+    .reading-progress-bar__fill {
+      height: 100%;
+      background: var(--gradient-hero);
+      width: 0%;
+      transition: width 0.12s linear;
+      border-radius: 0 2px 2px 0;
+      box-shadow: 0 0 8px var(--accent-glow);
+    }
+
+    /* ── Main reader area ───────────────────────────────────── */
+    .reader-main {
+      padding-top: calc(var(--navbar-h) + 8px);
+      padding-bottom: 120px;
+      min-height: 100vh;
+    }
+
+    .reader-container {
+      max-width: var(--reader-max);
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* Chapter info header */
+    .chapter-info-bar {
+      text-align: center;
+      padding: 2rem 0 1.5rem;
+      animation: fade-down 0.5s var(--ease) both;
+    }
+
+    @keyframes fade-down {
+      from { opacity:0; transform:translateY(-14px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+
+    .chapter-info-bar__eyebrow {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: #818cf8;
+      margin-bottom: 0.4rem;
+    }
+
+    .chapter-info-bar__title {
+      font-family: var(--font-display);
+      font-size: clamp(1.4rem, 3vw, 2rem);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+    }
+
+    .chapter-info-bar__sub {
+      font-size: 0.8rem;
+      color: var(--text-faint);
+      margin-top: 0.3rem;
+    }
+
+    /* Divider ornament */
+    .chapter-divider {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin: 1.25rem 0 2rem;
+      color: var(--text-faint);
+      font-size: 0.7rem;
+      letter-spacing: 0.1em;
+    }
+
+    .chapter-divider::before,
+    .chapter-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── Manga Pages ────────────────────────────────────────── */
+    .manga-pages {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .manga-page {
+      position: relative;
+      width: 100%;
+      line-height: 0;
+      cursor: zoom-in;
+      overflow: hidden;
+      border-radius: 4px;
+    }
+
+    .manga-page.zoomed {
+      cursor: zoom-out;
+    }
+
+    .manga-page img {
+      width: 100%;
+      height: auto;
+      display: block;
+      opacity: 0;
+      transition: opacity 0.5s var(--ease);
+      transform-origin: center center;
+      transition: opacity 0.5s var(--ease), transform 0.35s var(--ease);
+    }
+
+    .manga-page img.loaded { opacity: 1; }
+    .manga-page.zoomed img { transform: scale(1.8); }
+
+    /* Skeleton loader */
+    .manga-page__skeleton {
+      width: 100%;
+      aspect-ratio: 3/4;
+      background: linear-gradient(
+        90deg,
+        rgba(17,24,39,0.8) 0%,
+        rgba(30,41,59,0.9) 50%,
+        rgba(17,24,39,0.8) 100%
+      );
+      background-size: 400% 100%;
+      animation: shimmer 1.6s ease-in-out infinite;
+      border-radius: 4px;
+      position: absolute;
+      inset: 0;
+    }
+
+    .manga-page img.loaded + .manga-page__skeleton,
+    .manga-page img.loaded ~ .manga-page__skeleton { display: none; }
+
+    @keyframes shimmer {
+      0%   { background-position: 100% 0; }
+      100% { background-position: -100% 0; }
+    }
+
+    /* Page number overlay */
+    .manga-page__num {
+      position: absolute;
+      bottom: 8px; right: 10px;
+      background: rgba(5,8,16,0.75);
+      color: var(--text-faint);
+      font-size: 0.62rem;
+      font-weight: 600;
+      padding: 0.18rem 0.5rem;
+      border-radius: var(--radius-pill);
+      backdrop-filter: blur(6px);
+      letter-spacing: 0.04em;
+      pointer-events: none;
+    }
+
+    /* ── Bottom nav bar ─────────────────────────────────────── */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      padding: 1rem 1.5rem;
+      background: rgba(5, 8, 16, 0.9);
+      backdrop-filter: blur(24px);
+      border-top: 1px solid rgba(99,102,241,0.1);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      z-index: 200;
+      transition: opacity 0.4s var(--ease), transform 0.4s var(--ease);
+    }
+
+    .bottom-nav.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+    }
+
+    .bottom-nav__center {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.2rem;
+      min-width: 100px;
+    }
+
+    .bottom-nav__page-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .bottom-nav__page-sub {
+      font-size: 0.65rem;
+      color: var(--text-faint);
+    }
+
+    .chapter-nav-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      padding: 0.6rem 1.25rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      background: rgba(17,24,39,0.8);
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.22s var(--ease);
+      backdrop-filter: blur(8px);
+    }
+
+    .chapter-nav-btn:hover:not(:disabled) {
+      color: var(--text);
+      border-color: var(--border-accent);
+      background: var(--accent-dim);
+      box-shadow: 0 0 16px var(--accent-glow);
+      transform: translateY(-2px);
+    }
+
+    .chapter-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+    /* ── Focus mode toggle hint ─────────────────────────────── */
+    .focus-hint {
+      position: fixed;
+      bottom: 80px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      color: var(--text-faint);
+      background: rgba(17,24,39,0.7);
+      backdrop-filter: blur(8px);
+      padding: 0.3rem 0.8rem;
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s;
+      z-index: 100;
+    }
+
+    .focus-hint.visible { opacity: 1; }
+
+    /* ── End of chapter ─────────────────────────────────────── */
+    .chapter-end {
+      text-align: center;
+      padding: 4rem 1rem;
+      animation: fade-up 0.6s var(--ease) both;
+    }
+
+    .chapter-end__icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.5; }
+    .chapter-end__title { font-size: 1.2rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .chapter-end__sub { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 2rem; }
+    .chapter-end__actions { display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+    /* ── Responsive ─────────────────────────────────────────── */
+    @media (max-width: 600px) {
+      .reader-title { max-width: 160px; font-size: 0.8rem; }
+      .chapter-select { max-width: 130px; }
+      .chapter-nav-btn .btn-text { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Reading progress bar -->
+  <div class="reading-progress-bar" aria-hidden="true">
+    <div class="reading-progress-bar__fill" id="progress-fill"></div>
+  </div>
+
+  <!-- Reader Toolbar -->
+  <header class="reader-toolbar" id="reader-toolbar">
+    <div class="reader-toolbar__left">
+      <a href="manga-library.html" class="reader-btn" title="Back to Library" aria-label="Back to Library">←</a>
+      <a href="index.html"         class="reader-btn" title="Home"            aria-label="Go Home">🏠</a>
+    </div>
+
+    <div class="reader-toolbar__center">
+      <div class="reader-title"         id="reader-title">Loading…</div>
+      <div class="reader-chapter-label" id="reader-chapter-label">Chapter —</div>
+    </div>
+
+    <div class="reader-toolbar__right">
+      <select class="chapter-select" id="chapter-select" aria-label="Select chapter"></select>
+      <button class="reader-btn" id="btn-focus" title="Focus mode" aria-label="Toggle focus mode">◎</button>
+      <button class="reader-btn" id="btn-settings" title="Settings" aria-label="Settings">⚙</button>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="reader-main" id="reader-main">
+    <div class="reader-container">
+
+      <!-- Chapter info -->
+      <div class="chapter-info-bar" id="chapter-info-bar">
+        <div class="chapter-info-bar__eyebrow" id="ch-eyebrow">Loading…</div>
+        <h1 class="chapter-info-bar__title"    id="ch-title">—</h1>
+        <div class="chapter-info-bar__sub"     id="ch-sub">—</div>
+      </div>
+
+      <div class="chapter-divider" aria-hidden="true">❧ START READING ❧</div>
+
+      <!-- Pages injected here -->
+      <div class="manga-pages" id="manga-pages"></div>
+
+      <!-- End of chapter -->
+      <div class="chapter-end" id="chapter-end" style="display:none">
+        <div class="chapter-end__icon">📖</div>
+        <div class="chapter-end__title">End of Chapter</div>
+        <div class="chapter-end__sub" id="chapter-end-sub">Continue to the next chapter?</div>
+        <div class="chapter-end__actions">
+          <button class="btn btn--ghost" id="btn-end-prev">← Prev Chapter</button>
+          <button class="btn btn--primary" id="btn-end-next">Next Chapter →</button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- Bottom nav -->
+  <footer class="bottom-nav" id="bottom-nav">
+    <button class="chapter-nav-btn" id="btn-prev-ch" aria-label="Previous chapter" disabled>
+      ← <span class="btn-text">Previous</span>
+    </button>
+
+    <div class="bottom-nav__center">
+      <div class="bottom-nav__page-label" id="page-indicator">Page 0</div>
+      <div class="bottom-nav__page-sub"   id="page-sub">of — pages</div>
+    </div>
+
+    <button class="chapter-nav-btn" id="btn-next-ch" aria-label="Next chapter">
+      <span class="btn-text">Next</span> →
+    </button>
+  </footer>
+
+  <div class="focus-hint" id="focus-hint">Click anywhere to exit focus mode</div>
+
+  <script src="manga.js"></script>
+  <script>
+    'use strict';
+
+    /* ── State ─────────────────────────────────────────────── */
+    const state = {
+      manga:       null,
+      chapterIdx:  0,     // index into chapterList
+      pages:       [],
+      focusMode:   false,
+      zoomed:      null,  // currently zoomed page element
+    };
+
+    /* ── DOM refs ──────────────────────────────────────────── */
+    const $ = id => document.getElementById(id);
+    const readerToolbar  = $('reader-toolbar');
+    const bottomNav      = $('bottom-nav');
+    const chapterSelect  = $('chapter-select');
+    const mangaPagesEl   = $('manga-pages');
+    const progressFill   = $('progress-fill');
+    const pageIndicator  = $('page-indicator');
+    const pageSub        = $('page-sub');
+    const btnPrevCh      = $('btn-prev-ch');
+    const btnNextCh      = $('btn-next-ch');
+    const btnFocus       = $('btn-focus');
+    const chapterEnd     = $('chapter-end');
+    const btnEndPrev     = $('btn-end-prev');
+    const btnEndNext     = $('btn-end-next');
+    const focusHint      = $('focus-hint');
+
+    /* ── Load manga ────────────────────────────────────────── */
+    function boot() {
+      const id = getParam('id');
+      state.manga = id ? getMangaById(id) : null;
+
+      if (!state.manga) {
+        mangaPagesEl.innerHTML = `
+          <div style="text-align:center;padding:6rem 1rem;color:var(--text-faint)">
+            <div style="font-size:3rem;margin-bottom:1rem">🔍</div>
+            <p>Manga not found. <a href="manga-library.html" style="color:#818cf8">Back to Library</a></p>
+          </div>`;
+        $('reader-title').textContent = 'Not Found';
+        return;
+      }
+
+      /* Restore saved chapter */
+      const savedCh = parseInt(sessionStorage.getItem(`manga_ch_${id}`) || '0', 10);
+      state.chapterIdx = Math.min(savedCh, state.manga.chapterList.length - 1);
+
+      $('reader-title').textContent = state.manga.title;
+      document.title = `${state.manga.title} — CloudNovel Manga`;
+
+      buildChapterSelector();
+      loadChapter(state.chapterIdx);
+    }
+
+    /* ── Build chapter selector ─────────────────────────────── */
+    function buildChapterSelector() {
+      chapterSelect.innerHTML = '';
+      state.manga.chapterList.forEach((ch, i) => {
+        const opt = document.createElement('option');
+        opt.value    = i;
+        opt.textContent = `Ch. ${ch.num}: ${ch.title.slice(0, 20)}${ch.title.length > 20 ? '…' : ''}`;
+        chapterSelect.appendChild(opt);
+      });
+      chapterSelect.value = state.chapterIdx;
+    }
+
+    /* ── Load chapter ───────────────────────────────────────── */
+    function loadChapter(idx) {
+      const manga   = state.manga;
+      const chapter = manga.chapterList[idx];
+      if (!chapter) return;
+
+      state.chapterIdx = idx;
+      state.pages      = getMangaPages(manga, chapter.num);
+
+      /* Update UI text */
+      chapterSelect.value = idx;
+      $('reader-chapter-label').textContent = `Chapter ${chapter.num}`;
+      $('ch-eyebrow').textContent = manga.title;
+      $('ch-title').textContent   = chapter.title;
+      $('ch-sub').textContent     = `Chapter ${chapter.num} · ${state.pages.length} pages`;
+
+      pageSub.textContent = `of ${state.pages.length} pages`;
+
+      /* Nav buttons */
+      btnPrevCh.disabled = idx === 0;
+      btnNextCh.disabled = idx === manga.chapterList.length - 1;
+      $('btn-end-prev').disabled = idx === 0;
+      $('btn-end-next').disabled = idx === manga.chapterList.length - 1;
+
+      /* End card text */
+      if (idx < manga.chapterList.length - 1) {
+        $('chapter-end-sub').textContent =
+          `Next: Chapter ${manga.chapterList[idx+1].num} — ${manga.chapterList[idx+1].title}`;
+      } else {
+        $('chapter-end-sub').textContent = 'You\'ve caught up! Check back for new chapters.';
+        btnNextCh.disabled = true;
+      }
+
+      chapterEnd.style.display = 'none';
+      renderPages();
+
+      /* Scroll to top */
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      /* Persist */
+      sessionStorage.setItem(`manga_ch_${manga.id}`, idx);
+    }
+
+    /* ── Render pages ───────────────────────────────────────── */
+    function renderPages() {
+      mangaPagesEl.innerHTML = '';
+
+      state.pages.forEach((src, i) => {
+        const div = document.createElement('div');
+        div.className = 'manga-page';
+
+        const img = document.createElement('img');
+        img.alt = `Page ${i + 1}`;
+        img.loading = i < 3 ? 'eager' : 'lazy';
+
+        const skel = document.createElement('div');
+        skel.className = 'manga-page__skeleton';
+
+        const numBadge = document.createElement('div');
+        numBadge.className = 'manga-page__num';
+        numBadge.textContent = `${i + 1} / ${state.pages.length}`;
+
+        img.onload = () => {
+          img.classList.add('loaded');
+          skel.style.display = 'none';
+        };
+        img.onerror = () => {
+          img.src = `https://placehold.co/900x1280/0d1525/475569?text=Page+${i+1}`;
+          img.classList.add('loaded');
+          skel.style.display = 'none';
+        };
+        img.src = src;
+
+        /* Zoom on click */
+        div.addEventListener('click', () => {
+          if (state.zoomed && state.zoomed !== div) {
+            state.zoomed.classList.remove('zoomed');
+          }
+          div.classList.toggle('zoomed');
+          state.zoomed = div.classList.contains('zoomed') ? div : null;
+        });
+
+        div.appendChild(img);
+        div.appendChild(skel);
+        div.appendChild(numBadge);
+        mangaPagesEl.appendChild(div);
+      });
+
+      /* Show end-of-chapter card after last page */
+      setTimeout(() => { chapterEnd.style.display = 'block'; }, 500);
+    }
+
+    /* ── Scroll progress + page indicator ──────────────────── */
+    window.addEventListener('scroll', () => {
+      const scrolled = window.scrollY;
+      const total    = document.documentElement.scrollHeight - window.innerHeight;
+      const pct      = total > 0 ? (scrolled / total) * 100 : 0;
+      progressFill.style.width = `${pct.toFixed(2)}%`;
+
+      /* Determine which page is in view */
+      const pages = mangaPagesEl.querySelectorAll('.manga-page');
+      let currentPage = 1;
+      pages.forEach((pg, i) => {
+        const rect = pg.getBoundingClientRect();
+        if (rect.top < window.innerHeight * 0.5) currentPage = i + 1;
+      });
+      pageIndicator.textContent = `Page ${currentPage}`;
+    }, { passive: true });
+
+    /* ── Chapter navigation ─────────────────────────────────── */
+    chapterSelect.addEventListener('change', () => loadChapter(parseInt(chapterSelect.value, 10)));
+    btnPrevCh.addEventListener('click', () => { if (state.chapterIdx > 0) loadChapter(state.chapterIdx - 1); });
+    btnNextCh.addEventListener('click', () => {
+      if (state.chapterIdx < state.manga.chapterList.length - 1) loadChapter(state.chapterIdx + 1);
+    });
+    btnEndPrev.addEventListener('click', () => { if (state.chapterIdx > 0) loadChapter(state.chapterIdx - 1); });
+    btnEndNext.addEventListener('click', () => {
+      if (state.chapterIdx < state.manga.chapterList.length - 1) loadChapter(state.chapterIdx + 1);
+    });
+
+    /* ── Focus mode ─────────────────────────────────────────── */
+    let focusTimer;
+
+    function setFocus(on) {
+      state.focusMode = on;
+      readerToolbar.classList.toggle('hidden', on);
+      bottomNav.classList.toggle('hidden', on);
+      btnFocus.classList.toggle('active', on);
+      if (on) {
+        focusHint.classList.add('visible');
+        setTimeout(() => focusHint.classList.remove('visible'), 2500);
+      }
+    }
+
+    btnFocus.addEventListener('click', () => setFocus(!state.focusMode));
+
+    document.addEventListener('click', e => {
+      if (!state.focusMode) return;
+      if (e.target.closest('.manga-page')) return; // let zoom handle
+      setFocus(false);
+    });
+
+    /* ── Keyboard shortcuts ─────────────────────────────────── */
+    document.addEventListener('keydown', e => {
+      if (['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+      switch (e.key) {
+        case 'f': case 'F': setFocus(!state.focusMode); break;
+        case 'ArrowLeft':
+          if (state.chapterIdx > 0) loadChapter(state.chapterIdx - 1);
+          break;
+        case 'ArrowRight':
+          if (state.chapterIdx < state.manga?.chapterList.length - 1) loadChapter(state.chapterIdx + 1);
+          break;
+        case 'Escape':
+          if (state.focusMode) setFocus(false);
+          break;
+      }
+    });
+
+    /* ── Swipe (mobile) ─────────────────────────────────────── */
+    let touchStartX = null;
+    const SWIPE_THRESHOLD = 80;
+
+    document.addEventListener('touchstart', e => { touchStartX = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend',   e => {
+      if (touchStartX === null) return;
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      touchStartX = null;
+      if (Math.abs(dx) < SWIPE_THRESHOLD) return;
+      if (dx < 0 && state.chapterIdx < state.manga?.chapterList.length - 1) {
+        loadChapter(state.chapterIdx + 1);
+      } else if (dx > 0 && state.chapterIdx > 0) {
+        loadChapter(state.chapterIdx - 1);
+      }
+    }, { passive: true });
+
+    /* ── Boot ───────────────────────────────────────────────── */
+    boot();
+  </script>
+
+</body>
+</html>
